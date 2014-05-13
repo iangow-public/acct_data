@@ -1,0 +1,36 @@
+trying URL 'http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/BE-ME_Breakpoints.zip'
+Content type 'application/x-zip-compressed' length 4833 bytes
+opened URL
+==================================================
+downloaded 4833 bytes
+
+Warning message:
+NAs introduced by coercion 
+Loading required package: DBI
+trying URL 'http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/ME_Breakpoints.zip'
+Content type 'application/x-zip-compressed' length 66837 bytes (65 Kb)
+opened URL
+==================================================
+downloaded 65 Kb
+
+Warning messages:
+1: NAs introduced by coercion 
+2: NAs introduced by coercion 
+3: NAs introduced by coercion 
+Loading required package: plyr
+
+Attaching package: ‘reshape’
+
+The following objects are masked from ‘package:plyr’:
+
+    rename, round_any
+
+
+   0    1    2    3    4    5 
+1059 1059 1059 1059 1059 1059 
+
+ 0  1  2  3  4  5 
+88 88 88 88 88 88 
+> proc.time()
+   user  system elapsed 
+  1.015   0.126   1.665 

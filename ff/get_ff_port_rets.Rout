@@ -1,0 +1,17 @@
+trying URL 'http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/25_Portfolios_5x5.zip'
+Content type 'application/x-zip-compressed' length 231547 bytes (226 Kb)
+opened URL
+==================================================
+downloaded 226 Kb
+
+
+Attaching package: ‘reshape’
+
+The following objects are masked from ‘package:plyr’:
+
+    rename, round_any
+
+Loading required package: DBI
+> proc.time()
+   user  system elapsed 
+  0.856   0.041   1.346 

@@ -1,0 +1,16 @@
+trying URL 'http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_Factors.zip'
+Content type 'application/x-zip-compressed' length 11499 bytes (11 Kb)
+opened URL
+==================================================
+downloaded 11 Kb
+
+trying URL 'http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Momentum_Factor.zip'
+Content type 'application/x-zip-compressed' length 4986 bytes
+opened URL
+==================================================
+downloaded 4986 bytes
+
+Loading required package: DBI
+> proc.time()
+   user  system elapsed 
+  0.508   0.065   0.929 
