@@ -21,4 +21,4 @@ psql -d crsp -f crsp_make_mrets.sql
 psql -d crsp -f crsp_make_rets_alt.sql
 psql -d crsp -f ~/Dropbox/pg_backup/support/permissions.sql 
 
-pg_dump --host localhost --username "igow" --format custom --no-tablespaces --verbose --file ~/Dropbox/pg_backup/crsp.backup --schema "crsp" "crsp"
+pg_dump --format custom --no-tablespaces --verbose --file ~/Dropbox/pg_backup/crsp.backup --schema "crsp" "crsp"
