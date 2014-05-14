@@ -27,8 +27,10 @@ $st_path = "/Applications/StatTransfer12/st";
 # SAS code to extract information about the datatypes of the SAS data.
 # Note that there are some date formates that don't work with this code.
 $sas_code = "
-
+    options nonotes nosource;
+    
     libname pwd '.';
+    
 
 	* Edit the following to refer to the table of interest;
 	%let db=$db;
@@ -63,46 +65,28 @@ $sas_code = "
 # Run the SAS code on the WRDS server and save the result to @result
 
 my %hrec;
-if (1) {
-    @result = `echo "$sas_code" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal ' `;
-    foreach $row (@result)	{
+@result = `echo "$sas_code" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -nonotes -nonews -stdio -noterminal ' `;
+foreach $row (@result)	{
     my @fields = split(",", $row);
     my $field = @fields[0];
     $field =~ s/^do$/do_/i;
     my $type = @fields[1];
     $hrec{$field} = $type;
-  }
-} else {
-    # Read in schema.csv and parse the data therein.
-    # (It might be possible to parse this directly from a pipe from WRDS,
-    # #  but there are a lot of messy details in CSV files that I avoid this way.)
-    `echo "$sas_code" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal ' | cat > schema.csv`;
-    my $schema_csv = Text::CSV_XS->new ({ binary => 1 });
-    $schema = "schema.csv";
-    open my $io, "<", $schema or die "$schema: $!";
-    while (my $row = $schema_csv->getline ($io)) {
-        my @fields = @$row;
-        my $field = @fields[0];
-        $field =~ s/^do$/do_/i;
-        my $type = @fields[1];
-        $hrec{$field} = $type;
-    }
-    $schema_csv->eof or $schema_csv->error_diag;
-    # Clean up, etc.
-    close $io or die "$schema: $!";
 }
 
 # Now, get the first row of the SAS data file from WRDS. This is important,
 # as we need to put the table together so as to align the fields with the data
 # (the "schema" code above doesn't do this for us).
 $sas_code = "
+    options nosource nonotes;
+    
     proc export data=$db$table_name(obs=1)
         outfile=stdout
         dbms=csv;
     run;";
 
 # Run the SAS command and put the output into ./data.csv.gz
-@result = `echo "$sas_code" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal ' | gzip > data.csv.gz`;
+@reult = `echo "$sas_code" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -nonotes -nonews -stdio -noterminal  ' | gzip > data.csv.gz`;
 $gz_file = "data.csv.gz";
 
 # Get the first row of the text file
@@ -112,7 +96,11 @@ my $fh = new IO::Uncompress::Gunzip $gz_file
 
 $row = $csv->getline($fh);
 
-# Get table information from the "schema" file
+# Clean up, etc.
+$csv->eof or $csv->error_diag;
+close $fh or die "$gz_file: $!";
+
+# Connect to the database
 my $dbh = DBI->connect("dbi:Pg:dbname=$dbname")	
     or die "Cannot connect: " . $DBI::errstr;
 
@@ -128,18 +116,21 @@ $i=0;
 # Construct SQL fragment associated with each variable for 
 # the table creation statement
 foreach $field (@$row) {
-	# Flag some key fields for indexing. Probably should use the schema file
+
+    # Flag some key fields for indexing. Probably should use the schema file
 	# to indicate what fields should be used for indexing. Not sure if
 	# WRDS SAS file contains useful information in this regard.
 	if ($field =~ /^GVKEY$/i) { $has_gvkey = 1; }
 	if ($field =~ /^DATADATE$/i) { $has_datadate = 1; }
 	if ($field =~ /^PERMNO$/i) { $has_permno = 1; }
 	if ($field =~ /^DATE$/i) { $has_date = 1;}
-	$field =~ s/^do$/do_/i;
+
+    # Rename fields with problematic names
+    $field =~ s/^do$/do_/i;
 
 	# Dates are stored as integers initially, then converted to 
 	# dates later on (see below).
-		$type = $hrec{$field};
+	$type = $hrec{$field};
 
 	# Concatenate the component strings. Note that, apart from the first
 	# field a leading comma is inserted to separate fields in the 
@@ -150,10 +141,6 @@ foreach $field (@$row) {
 $sql = $sql . ");";
 print "$sql\n";
 
-# Clean up, etc.
-$csv->eof or $csv->error_diag;
-close $fh or die "$gz_file: $!";
-
 # Drop the table if it exists already, then create the new table
 # using field names taken from the first row
 $dbh->do("DROP TABLE IF EXISTS $table_name CASCADE;");
@@ -161,6 +148,8 @@ $dbh->do($sql);
 
 if ($use_st) {
     $sas_code = "
+      options nosource nonotes;
+      
       libname pwd '/sastemp6';
       data pwd.schema;
           set $db$table_name;
@@ -169,7 +158,7 @@ if ($use_st) {
     # Use PostgreSQL's COPY function to get data into the database
     $time = localtime;
     printf "Beginning file import at %d:%02d:%02d\n",@$time[2],@$time[1],@$time[0];
-    $cmd = "echo \"$sas_code\" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal 2> mylog;";
+    $cmd = "echo \"$sas_code\" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -nonotes -nonews -stdio -noterminal 2> mylog;";
     $cmd .= " cat	 /sastemp6/schema.sas7bdat' | cat > ~/data.sas7bdat;";
     $cmd .= " $st_path ~/data.sas7bdat ~/data.csv;";
     $cmd .= " cat ~/data.csv | psql ";
@@ -180,13 +169,16 @@ if ($use_st) {
 } else {
   # Get the data
   $sas_code = "
+      options nosource nonotes;
+      
       proc export data=$db$table_name outfile=stdout dbms=csv;
       run;";
 
   # Use PostgreSQL's COPY function to get data into the database
   $time = localtime;
   printf "Beginning file import at %d:%02d:%02d\n",@$time[2],@$time[1],@$time[0];
-  $cmd = "echo \"$sas_code\" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal 2> mylog'";
+  $cmd = "echo \"$sas_code\" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -nonews -nonotes -stdio -noterminal'";
+
   $cmd .= " | psql  ";
   $cmd .= "-d $dbname -c \"COPY $db_schema.$table_name FROM STDIN CSV HEADER ENCODING 'latin1' \"";
 }
