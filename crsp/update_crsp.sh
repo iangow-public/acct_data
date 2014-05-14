@@ -9,7 +9,7 @@
 ./get_schema.pl crsp stocknames
 ./get_schema_alt.pl crsp ccmxpf_linktable
 ./get_schema_alt.pl crsp ccmxpf_lnkhist
-./get_schema_alt.pl crsp cmxpf_lnkused
+./get_schema_alt.pl crsp ccmxpf_lnkused
 ./get_schema_alt.pl crsp dsedelist
 ./get_schema_alt.pl crsp dsedist
 ./get_schema_alt.pl crsp msedelist
