@@ -9,8 +9,6 @@ $db_schema = @ARGV[0];
 $db = "$db_schema.";
 $db =~ s/^crsp/crspq/;
 $dbname = "crsp";
-$wrds_id = "iangow";
-$st_path = "/Applications/StatTransfer12/st";
 
 $sas_code = "
 	libname pwd '.';
@@ -47,7 +45,7 @@ $sas_code = "
 # print "$sas_code";
 
 
-@result = `echo "$sas_code" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal' | cat > schema.csv`;
+@result = `echo "$sas_code" | ssh -C iangow\@wrds.wharton.upenn.edu 'sas -stdio -noterminal' | cat > schema.csv`;
 # print $result;
 # exit 1;
 # print $result;
@@ -81,6 +79,7 @@ while (my $row = $schema_csv->getline ($io)) {
 $schema_csv->eof or $schema_csv->error_diag;
 close $io or die "$schema: $!";
 
+print join(", ", @hrec);
 $sas_code = "
 	proc export data=$db$table_name(obs=1)
             outfile=stdout
@@ -91,7 +90,7 @@ $sas_code = "
 print "$sas_code";
 
 
-@result = `rm data.csv.gz; echo "$sas_code" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal' | gzip > data.csv.gz`;
+@result = `rm data.csv.gz; echo "$sas_code" | ssh -C iangow\@wrds.wharton.upenn.edu 'sas -stdio -noterminal' | gzip > data.csv.gz`;
 
 $gz_file = "data.csv.gz";
 
@@ -105,6 +104,9 @@ $row = $csv->getline($fh);
 # Get table information from the "schema" file
 my $dbh = DBI->connect("dbi:Pg:dbname=$dbname")	
 	or die "Cannot connect: " . $DBI::errstr;
+
+# $schema = "schema/$table_name" . "_schema.csv";
+# $db_schema = "crsp";
 
 $dbh->do("SET search_path TO $db_schema");
 
@@ -157,16 +159,10 @@ if(TRUE) {
 	$dbh->do($sql);
 
   
-    if ($table_name eq "ccmxpf_linktable") {
-        $dbh->do("ALTER TABLE crsp.ccmxpf_lnkused ALTER usedflag TYPE integer");
-        $dbh->do("ALTER TABLE crsp.ccmxpf_lnkused ALTER apermno TYPE integer");
-        $dbh->do("ALTER TABLE crsp.ccmxpf_lnkused ALTER upermno TYPE integer");
-        $dbh->do("ALTER TABLE crsp.ccmxpf_lnkused ALTER upermco TYPE integer");
-        $dbh->do("ALTER TABLE crsp.ccmxpf_lnkused ALTER ulinkid TYPE integer");
-        $dbh->do("ALTER TABLE crsp.ccmxpf_linktable ALTER lpermco TYPE integer");
-    }
-
-    if ($table_name eq "ccmxpf_linktable")
+  if ($table_name eq "ccmxpf_linktable") {
+    $dbh->do("ALTER TABLE crsp.ccmxpf_linktable ALTER lpermno TYPE integer");
+    $dbh->do("ALTER TABLE crsp.ccmxpf_linktable ALTER lpermco TYPE integer");
+  }
 
 	# Get the data
 	$sas_code = "
@@ -179,10 +175,10 @@ if(TRUE) {
 	# Use PostgreSQL's COPY function to get data into the database
 	$time = localtime;
 	printf "Beginning file import at %d:%02d:%02d\n",@$time[2],@$time[1],@$time[0];
-	$cmd = "echo \"$sas_code\" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal;";
+	$cmd = "echo \"$sas_code\" | ssh -C iangow\@wrds.wharton.upenn.edu 'sas -stdio -noterminal 2>mylog;";
 	$cmd .= " cat	 /sastemp6/schema.sas7bdat' | cat > ~/data.sas7bdat;";
-	$cmd .= " $st_path ~/data.sas7bdat ~/data.csv;";
-	$cmd .= " cat ~/data.csv | psql ";
+	$cmd .= " /Applications/StatTransfer12/st ~/data.sas7bdat ~/data.csv;";
+	$cmd .= " cat ~/data.csv | psql -U igow ";
 	$cmd .= "-d $dbname -c \"COPY $db_schema.$table_name FROM STDIN CSV HEADER ENCODING 'latin1' \"";
 	$cmd .= "; rm ~/data.csv";
 
@@ -290,5 +286,5 @@ print "$updated\n";
 $dbh->do("COMMENT ON TABLE $table_name IS '$updated'");
 $dbh->disconnect();
 
-# $cmd = "psql -d $dbname < ~/Dropbox/pg_backup/support/permissions.sql";
+# $cmd = "psql -d crsp < ~/Dropbox/pg_backup/support/permissions.sql";
 # $results = system($cmd);
