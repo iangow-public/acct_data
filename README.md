@@ -1,4 +1,7 @@
-acct_data
+Data for accounting research
 =========
 
-Code to pull together data
+This repository contains code to pull together data from various sources including:
+- WRDS
+- SEC EDGAR
+- Ken French's website
