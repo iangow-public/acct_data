@@ -19,33 +19,35 @@ $sas_code = "
 	run;";
 
 # Get table information from the "schema" file
-my $dbh = DBI->connect("dbi:Pg:dbname=$dbname", 'igow', 'test')	
+$dbname = "crsp";
+my $dbh = DBI->connect("dbi:Pg:dbname=$dbname")	
 	or die "Cannot connect: " . $DBI::errstr;
 
 
 $sql = "
-DROP TABLE IF EXISTS crsp.ermport CASCADE;
+    DROP TABLE IF EXISTS crsp.ermport_alt CASCADE;
+    
+    CREATE TABLE crsp.ermport_alt
+    (
+      date date,
+      capn bigint,
+      decret double precision
+    )";
 
-CREATE TABLE crsp.ermport
-(
-  date date,
-  capn bigint,
-  decret double precision
-)";
+$dbh->do($sql);
 
-	# Use PostgreSQL's COPY function to get data into the database
-	$time = localtime;
-	printf "Beginning file import at %d:%02d:%02d\n",@$time[2],@$time[1],@$time[0];
-	$cmd = "echo \"$sas_code\" | ssh -C iangow\@wrds.wharton.upenn.edu 'sas -stdio -noterminal'";
-	$cmd .= " | psql ";
-	$cmd .= "-d $dbname -c \"COPY crsp.ermport FROM STDIN CSV HEADER ENCODING 'latin1' \"";
+# Use PostgreSQL's COPY function to get data into the database
+$time = localtime;
+printf "Beginning file import at %d:%02d:%02d\n",@$time[2],@$time[1],@$time[0];
+$cmd = "echo \"$sas_code\" | ssh -C iangow\@wrds.wharton.upenn.edu 'sas -stdio -noterminal'";
+$cmd .= " | psql ";
+$cmd .= " -c \"COPY crsp.ermport_alt FROM STDIN CSV HEADER ENCODING 'latin1' \"";
 
-	print "$cmd\n";
-	$result = system($cmd);
-	print "Result of system command: $result\n";
+print "$cmd\n";
+$result = system($cmd);
+print "Result of system command: $result\n";
 
-	$time = localtime;
-	printf "Completed file import at %d:%02d:%02d\n",@$time[2],@$time[1],@$time[0];
-}
+$time = localtime;
+printf "Completed file import at %d:%02d:%02d\n",@$time[2],@$time[1],@$time[0];
 
 $dbh->disconnect();
