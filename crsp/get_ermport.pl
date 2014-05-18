@@ -2,10 +2,8 @@
 use DBI;
 
 my $dbname = $PGDATABASE;
-my $use_st = '';
 my $wrds_id = 'iangow';	# option variable with default value
-GetOptions('fix-missing' => \$fix_missing,
-            'wrds-id=s' => \$wrds_id,
+GetOptions( 'wrds-id=s' => \$wrds_id,
             'dbname=s' => \$dbname); 
 
 # SAS code to extract information about the datatypes of the SAS data.
