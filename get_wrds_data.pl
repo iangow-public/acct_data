@@ -9,7 +9,7 @@ use Env qw($PGDATABASE);
 ################################################
 
 # Extract options from the command line
-# Example ./get_wrds_data.pl comp idx_index --fix-missing --wrds-id iangow
+# Example ./get_wrds_data   .pl comp idx_index --fix-missing --wrds-id iangow
 # gets comp.idx_index from WRDS using WRDS ID iangow. It also converts 
 # special missing values (e.g., .Z) to regular missing values (i.e., .)
 #
@@ -19,7 +19,7 @@ use Env qw($PGDATABASE);
 # --dbname=your_database, otherwise environment variable
 # PGDATABASE will be used.
 my $dbname = $PGDATABASE;
-my $use_st = '';
+my $fix_missing = '';
 my $wrds_id = 'iangow';	# option variable with default value
 GetOptions('fix-missing' => \$fix_missing,
             'wrds-id=s' => \$wrds_id,
