@@ -64,6 +64,7 @@ $sas_code = "
 		format postgres_type \\\$36.;
 		if format=\\\"TIME8.\\\" or prxmatch(\\\"/time/i\\\", format) then postgres_type=\\\"time\\\";
 		else if format=\\\"YYMMDDN\\\" or format=\\\"DATE9.\\\" or prxmatch(\\\"/date/i\\\", format) 
+            or prxmatch(\\\"/yymmdd/i\\\", format) 
             then postgres_type=\\\"date\\\";
 	  	else if type=1 then do;
 			if formatd ^= 0 then postgres_type = \\\"float8\\\";
@@ -147,7 +148,9 @@ $dbh->do("SET search_path TO $db_schema");
 
 # Drop the table if it exists already, then create the new table
 # using field names taken from the first row
-$dbh->do("DROP TABLE IF EXISTS $table_name CASCADE;");
+$dbh->do("
+    CREATE SCHEMA IF NOT EXISTS $db_schema; 
+    DROP TABLE IF EXISTS $table_name CASCADE;");
 $dbh->do($sql);
 
 ##################################################################
