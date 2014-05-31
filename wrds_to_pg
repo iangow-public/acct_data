@@ -196,7 +196,7 @@ if ($fix_missing) {
 # Use PostgreSQL's COPY function to get data into the database
 $cmd = "echo \"$sas_code\" | ";
 $cmd .= " ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -nonews -nonotes -stdio -noterminal' | ";
-$cmd .= " psql -c \"COPY $db_schema.$table_name FROM STDIN CSV HEADER ENCODING 'latin1' \"";
+$cmd .= " psql -d $dbname -c \"COPY $db_schema.$table_name FROM STDIN CSV HEADER ENCODING 'latin1' \"";
 print "$cmd\n";
 $result = system($cmd);
 print "Result of system command: $result\n";
