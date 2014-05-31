@@ -18,12 +18,14 @@ use Env qw($PGDATABASE);
 # Database name can be specified on command line using
 # --dbname=your_database, otherwise environment variable
 # PGDATABASE will be used.
-my $dbname = $PGDATABASE;
+# optional variable with default value
+my $wrds_id = 'iangow';my $dbname = $PGDATABASE;
 my $fix_missing = '';
-my $wrds_id = 'iangow';	# option variable with default value
+my $updated = '';
 GetOptions('fix-missing' => \$fix_missing,
             'wrds-id=s' => \$wrds_id,
-            'dbname=s' => \$dbname); 
+            'dbname=s' => \$dbname,
+            'updated=s' => \$updated,); 
 
 # Get schema and table name from command line. I have set my database
 # up so that these line up with the names of the WRDS library and data
@@ -62,8 +64,10 @@ $sas_code = "
 	data schema(keep=name postgres_type);
 		set schema(keep=name format formatl formatd length type);
 		format postgres_type \\\$36.;
-		if format=\\\"TIME8.\\\" or prxmatch(\\\"/time/i\\\", format) then postgres_type=\\\"time\\\";
-		else if format=\\\"YYMMDDN\\\" or format=\\\"DATE9.\\\" or prxmatch(\\\"/date/i\\\", format) 
+		if format=\\\"TIME8.\\\" or prxmatch(\\\"/time/i\\\", format) 
+            then postgres_type=\\\"time\\\";
+		else if format=\\\"YYMMDDN\\\" or format=\\\"DATE9.\\\"
+            or prxmatch(\\\"/date/i\\\", format) 
             or prxmatch(\\\"/yymmdd/i\\\", format) 
             then postgres_type=\\\"date\\\";
 	  	else if type=1 then do;
@@ -79,7 +83,9 @@ $sas_code = "
 	run;";
 
 # Run the SAS code on the WRDS server and save the result to @result
-@result = `echo "$sas_code" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -nonotes -nonews -stdio -noterminal ' `;
+$cmd = "echo \"$sas_code\" | ";
+$cmd .= "ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas  -stdio -noterminal ' 2>/dev/null";
+@result = `$cmd`;
 
 # Now fill an array with the names and data type of each variable 
 my %var_type;
@@ -112,7 +118,12 @@ $sas_code = "
     run;";
 
 # Run the SAS command and get the first row of the table
-$row = `echo "$sas_code" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -nonotes -nonews -stdio -noterminal  ' | head -n 1`;
+$cmd = "echo \"$sas_code\" | ";
+$cmd .= "ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas  -stdio -noterminal ' 2>/dev/null";
+$cmd .= "| head -n 1";
+# print "$cmd\n";
+print "Getting schema for $db_schema.$table_name\n";
+$row = `$cmd`;
 
 ##################################################
 # 3. Construct and run CREATE TABLE statement    #
@@ -164,6 +175,7 @@ printf "Beginning file import at %d:%02d:%02d\n",@$tm[2],@$tm[1],@$tm[0];
 if ($fix_missing) {
     # If need to fix special missing values, then convert them to 
     # regular missing values, then run PROC EXPORT
+    $dsf_fix =  ($table_name eq "dsf" ? "format numtrd 8.;\n" : "");
     $sas_code = "
       options nosource nonotes;
       
@@ -172,10 +184,11 @@ if ($fix_missing) {
       * Fix missing values;
       data pwd.schema;
           set $db$table_name;
+          $dsf_fix
 
           array allvars _numeric_ ;
 
-          do over allvars;
+           do over allvars;
               if missing(allvars) then allvars = . ;
           end;
       run;
@@ -195,9 +208,10 @@ if ($fix_missing) {
 
 # Use PostgreSQL's COPY function to get data into the database
 $cmd = "echo \"$sas_code\" | ";
-$cmd .= " ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -nonews -nonotes -stdio -noterminal' | ";
-$cmd .= " psql -d $dbname -c \"COPY $db_schema.$table_name FROM STDIN CSV HEADER ENCODING 'latin1' \"";
-print "$cmd\n";
+$cmd .= "ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal' 2>/dev/null | ";
+$cmd .= "psql -d $dbname -c \"COPY $db_schema.$table_name FROM STDIN CSV HEADER ENCODING 'latin1' \"";
+# print "$cmd\n";
+print "Importing data into $db_schema.$table_name.\n";
 $result = system($cmd);
 print "Result of system command: $result\n";
 
@@ -206,7 +220,9 @@ printf "Completed file import at %d:%02d:%02d\n",@$tm[2],@$tm[1],@$tm[0];
 
 # Comment on table to reflect date it was updated
 my ($day,$month,$year)=($tm->mday(),$tm->mon(),$tm->year());
-$updated = sprintf( "Table updated on %d-%02d-%02d.", 1900+$year, 1+$month, $day);
+if ($updated eq "") {
+    $updated = sprintf( "Table updated on %d-%02d-%02d.", 1900+$year, 1+$month, $day);
+}
 print "$updated\n";
 $dbh->do("COMMENT ON TABLE $table_name IS '$updated'");
 $dbh->disconnect();

@@ -32,6 +32,5 @@ RESET work_mem;
 SET maintenance_work_mem='6GB';
 CREATE INDEX ON crsp.mrets (permno, date);
 
-
 ANALYZE crsp.mrets;
 

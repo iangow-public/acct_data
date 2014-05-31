@@ -1,5 +1,8 @@
 #!/usr/bin/env perl
 use DBI;
+use Getopt::Long;
+use Time::localtime;
+use Env qw($PGDATABASE);
 
 my $dbname = $PGDATABASE;
 my $wrds_id = 'iangow';	# option variable with default value
@@ -27,30 +30,31 @@ $sas_code = "
 my $dbh = DBI->connect("dbi:Pg:dbname=$dbname")	
 	or die "Cannot connect: " . $DBI::errstr;
 
-
 $sql = "
-DROP TABLE IF EXISTS crsp.ermport CASCADE;
+    DROP TABLE IF EXISTS crsp.ermport CASCADE;
 
-CREATE TABLE crsp.ermport
-(
-  date date,
-  capn bigint,
-  decret double precision
-)";
+    CREATE TABLE crsp.ermport
+    (
+        date date,
+        capn bigint,
+        decret double precision
+    )";
 
 	# Use PostgreSQL's COPY function to get data into the database
 	$time = localtime;
 	printf "Beginning file import at %d:%02d:%02d\n",@$time[2],@$time[1],@$time[0];
-	$cmd = "echo \"$sas_code\" | ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal'";
-	$cmd .= " | psql -d $dbname -c \"COPY crsp.ermport FROM STDIN CSV HEADER ENCODING 'latin1' \"";
+	$cmd  = "echo \"$sas_code\" | ";
+    $cmd .= "ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal' 2>/dev/null | ";
+	$cmd .= "psql -d $dbname -c ";
+    $cmd .= "\"COPY crsp.ermport FROM STDIN CSV HEADER ENCODING 'latin1' \"";
 
-	print "$cmd\n";
+    print "Getting crsp.ermport1 data\n";
+    #print "$cmd\n";
 	$result = system($cmd);
-	print "Result of system command: $result\n";
+    print "Result of system command: $result\n";
 
 	$time = localtime;
 	printf "Completed file import at %d:%02d:%02d\n",@$time[2],@$time[1],@$time[0];
-}
->>>>>>> 6b64ba070d6f6cbed5e15ae5a9c637ec5eecd8d4
 
 $dbh->disconnect();
+
