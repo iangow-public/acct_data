@@ -28,8 +28,11 @@ GetOptions('fix-missing' => \$fix_missing,
 # Get schema and table name from command line. I have set my database
 # up so that these line up with the names of the WRDS library and data
 # file, respectively.
-$table_name = @ARGV[1];
-$db_schema = @ARGV[0];
+@table_args = split(/\./,  @ARGV[0]);
+
+$db_schema = $table_args[0];
+$table_name = $table_args[1];
+
 
 $db = "$db_schema.";
 
