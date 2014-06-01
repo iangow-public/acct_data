@@ -17,8 +17,9 @@ $sas_code = "
 
     PROC SQL;
         CREATE TABLE pwd.ermport AS
-        SELECT DISTINCT date, capn, decret
+        SELECT date, capn AS capn, avg(decret)
         FROM crsp.ermport1
+        GROUP BY date, capn
         ORDER BY date, capn;
     quit;
 
@@ -40,21 +41,23 @@ $sql = "
         decret double precision
     )";
 
-	# Use PostgreSQL's COPY function to get data into the database
-	$time = localtime;
-	printf "Beginning file import at %d:%02d:%02d\n",@$time[2],@$time[1],@$time[0];
-	$cmd  = "echo \"$sas_code\" | ";
-    $cmd .= "ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal' 2>/dev/null | ";
-	$cmd .= "psql -d $dbname -c ";
-    $cmd .= "\"COPY crsp.ermport FROM STDIN CSV HEADER ENCODING 'latin1' \"";
+$dbh->do($sql);
 
-    print "Getting crsp.ermport1 data\n";
-    #print "$cmd\n";
-	$result = system($cmd);
-    print "Result of system command: $result\n";
+# Use PostgreSQL's COPY function to get data into the database
+$time = localtime;
+printf "Beginning file import at %d:%02d:%02d\n",@$time[2],@$time[1],@$time[0];
+$cmd  = "echo \"$sas_code\" | ";
+$cmd .= "ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal' 2>/dev/null | ";
+$cmd .= "psql -d $dbname -c ";
+$cmd .= "\"COPY crsp.ermport FROM STDIN CSV HEADER ENCODING 'latin1' \"";
 
-	$time = localtime;
-	printf "Completed file import at %d:%02d:%02d\n",@$time[2],@$time[1],@$time[0];
+print "Getting crsp.ermport1 data\n";
+#print "$cmd\n";
+$result = system($cmd);
+print "Result of system command: $result\n";
+
+$time = localtime;
+printf "Completed file import at %d:%02d:%02d\n",@$time[2],@$time[1],@$time[0];
 
 $dbh->disconnect();
 
