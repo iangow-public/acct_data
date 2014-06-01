@@ -15,14 +15,14 @@ CREATE TABLE crsp.mrets AS
         ON a.permno=b.permno and a.date = b.dlstdt
         WHERE a.ret IS NOT NULL OR b.dlret IS NOT NULL),
     
-    msf_w_erdport AS (
+    msf_w_ermport AS (
         SELECT a.*, b.decret 
         FROM msf_plus AS a
         LEFT JOIN crsp.ermport1 AS b
         ON a.permno=b.permno AND a.date=b.date)
     
     SELECT c.*, d.vwretd
-    FROM msf_w_erdport AS c
+    FROM msf_w_ermport AS c
     LEFT JOIN crsp.msi AS d
     ON eomonth(c.date)=eomonth(d.date);
 
