@@ -1,26 +1,26 @@
-../get_schema.pl dealscan borrowerbase
-../get_schema.pl dealscan company
-../get_schema.pl dealscan currfacpricing
-../get_schema.pl dealscan dbo_df_fac_dates_data
-../get_schema.pl dealscan dealamendment
-../get_schema.pl dealscan facility
-../get_schema.pl dealscan facilityamendment
-../get_schema.pl dealscan facilitydates
-../get_schema.pl dealscan facilityguarantor
-../get_schema.pl dealscan facilitypaymentschedule
-../get_schema.pl dealscan facilitysecurity
-../get_schema.pl dealscan facilitysponsor
-../get_schema.pl dealscan financialcovenant
-../get_schema.pl dealscan financialratios
-../get_schema.pl dealscan lendershares
-../get_schema.pl dealscan link_table
-../get_schema.pl dealscan lins
-../get_schema.pl dealscan marketsegment
-../get_schema.pl dealscan networthcovenant
-../get_schema.pl dealscan organizationtype
-../get_schema.pl dealscan package
-../get_schema.pl dealscan performancepricing
-../get_schema.pl dealscan performancepricingcomments
-../get_schema.pl dealscan sublimits
+wrds_to_pg_v2 dealscan.borrowerbase
+wrds_to_pg_v2 dealscan.company
+wrds_to_pg_v2 dealscan.currfacpricing
+wrds_to_pg_v2 dealscan.dbo_df_fac_dates_data
+wrds_to_pg_v2 dealscan.dealamendment
+wrds_to_pg_v2 dealscan.facility
+wrds_to_pg_v2 dealscan.facilityamendment
+wrds_to_pg_v2 dealscan.facilitydates
+wrds_to_pg_v2 dealscan.facilityguarantor
+wrds_to_pg_v2 dealscan.facilitypaymentschedule
+wrds_to_pg_v2 dealscan.facilitysecurity
+wrds_to_pg_v2 dealscan.facilitysponsor
+wrds_to_pg_v2 dealscan.financialcovenant
+wrds_to_pg_v2 dealscan.financialratios
+wrds_to_pg_v2 dealscan.lendershares
+wrds_to_pg_v2 dealscan.link_table
+wrds_to_pg_v2 dealscan.lins
+wrds_to_pg_v2 dealscan.marketsegment
+wrds_to_pg_v2 dealscan.networthcovenant
+wrds_to_pg_v2 dealscan.organizationtype
+wrds_to_pg_v2 dealscan.package
+wrds_to_pg_v2 dealscan.performancepricing
+wrds_to_pg_v2 dealscan.performancepricingcomments
+wrds_to_pg_v2 dealscan.sublimits
 
-pg_dump --host localhost --username "igow" --format custom --no-tablespaces --verbose --file ~/Dropbox/pg_backup/dealscan.backup --schema "dealscan" "crsp"
+pg_dump --format custom --no-tablespaces --verbose --file ~/Dropbox/pg_backup/dealscan.backup --schema "dealscan" "crsp"
