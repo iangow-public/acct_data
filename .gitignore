@@ -7,3 +7,5 @@ schema.csv
 *.swp
 
 data.csv
+
+ibes/get_iclink.Rout
