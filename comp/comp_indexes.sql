@@ -11,7 +11,6 @@ CREATE INDEX ON comp.g_sec_divid (gvkey, datadate);
 CREATE INDEX ON comp.idx_ann (datadate);
 CREATE INDEX ON comp.io_qbuysell (gvkey, datadate);
 CREATE INDEX ON comp.names (gvkey);
-CREATE INDEX ON comp.sec_divid (gvkey, datadate);
 CREATE INDEX ON comp.secm (gvkey, datadate);
 CREATE INDEX ON comp.spind_mth (gvkey, datadate);
 CREATE INDEX ON comp.wrds_segmerged (gvkey, datadate);
