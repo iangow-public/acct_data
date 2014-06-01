@@ -1,4 +1,4 @@
-cd .
+cd ..
 ./wrds_to_pg_v2 crsp.msf --fix-missing
 ./wrds_to_pg_v2 crsp.dsf --fix-missing
 ./wrds_to_pg_v2 crsp.dseexchdates
