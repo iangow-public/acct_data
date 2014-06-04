@@ -43,6 +43,13 @@ if ($dport) {
     system("psql -f crsp/crsp_make_erdport1.sql");
 }
 
+if ($dsf) {
+    system("psql -f crsp/crsp_indexes.sql");
+
+}
+
+  
+
 if ($dport | $dsf | $dsi | $dsedelist) {
     system("psql -f crsp/crsp_make_rets_alt.sql")
 }

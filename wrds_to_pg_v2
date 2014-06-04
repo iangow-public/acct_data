@@ -81,12 +81,14 @@ $cmd .= "'sas -stdio -noterminal' 2>/dev/null";
 my $modified = "";
 my $next_row = 0;
 foreach (@result) {
-    if ($next_row ==1) {
+    if ($next_row==1) {
     #    print "$_";
         $_ =~ s/^\s+(.*)\s+$/$1/;
         chomp $_;
         $_ =~ s/\s+$//;
-        $modified .= " " . $_;
+        if ($_ !~ "Protection") {
+          $modified .= " " . $_;
+        }
         $next_row = 0;
     }
     
