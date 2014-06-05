@@ -100,7 +100,7 @@ CREATE TABLE whalewisdom.stocks
 
 # Run SQL to create the table
 $dbh->do($sql);
-$filename = "whalewisdom_raw_snapshot_2014-5-28.tgz";
+$filename = "~/Dropbox/data/whalewisdom/whalewisdom_raw_snapshot_2014-5-28.tgz";
 # Use PostgreSQL's COPY function to get data into the database
 foreach $item ("quarters", "other_managers", "filers", "stocks", "filings", "filing_stock_records")
 {
