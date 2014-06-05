@@ -14,6 +14,8 @@ cd ..
 ./wrds_to_pg_v2 crsp.msedelist --fix-missing
 ./wrds_to_pg_v2 crsp.fund_names --fix-missing
 
+psql -f fix_permnos.sql
+
 ./wrds_to_pg_v2 crsp.dport1
 ./wrds_to_pg_v2 crsp.mport1 
 cd crsp

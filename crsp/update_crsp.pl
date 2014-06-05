@@ -7,8 +7,8 @@ $msi = system("./wrds_to_pg_v2 crsp.msi");
 $msedelist = system("./wrds_to_pg_v2 crsp.msedelist --fix-missing");
 
 $mport = system("./wrds_to_pg_v2 crsp.mport1");
-# See http://perldoc.perl.org/functions/system.html
 
+# See http://perldoc.perl.org/functions/system.html
 $mport = $mport >> 8;
 if ($mport) {
     print "Getting ermport1\n";
@@ -38,6 +38,7 @@ $dsi = $dsi >> 8;
 $dsedelist = $dsedelist >> 8;
 
 if ($dport) {
+    system("psql -f crsp/fix_d_permnos.sql");
     print "Getting erdport1\n";
     system("crsp/get_erdport.pl");
     system("psql -f crsp/crsp_make_erdport1.sql");
@@ -47,8 +48,6 @@ if ($dsf) {
     system("psql -f crsp/crsp_indexes.sql");
 
 }
-
-  
 
 if ($dport | $dsf | $dsi | $dsedelist) {
     system("psql -f crsp/crsp_make_rets_alt.sql")
@@ -63,5 +62,6 @@ system("
     ./wrds_to_pg_v2 crsp.ccmxpf_lnkhist --fix-missing;
     ./wrds_to_pg_v2 crsp.ccmxpf_lnkused --fix-missing;
     ./wrds_to_pg_v2 crsp.dsedist --fix-missing;
-    ./wrds_to_pg_v2 crsp.fund_names --fix-missing;")
+    ./wrds_to_pg_v2 crsp.fund_names --fix-missing;
+    psql -f crsp/fix_o_permnos.sql")
 
