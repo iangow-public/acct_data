@@ -27,5 +27,11 @@ wrds_to_pg_v2 crsp.msf --wrds_id=iangow --dbname=crsp --fix-missing
 ```
 updates the monthly stock file from CRSP (this file has special missing values, hence the additional flag).
 
+Note that I use public-key authentication to access WRDS. Following hints taken from [here](http://www.debian-administration.org/articles/152), I set up a public key. I then copied that key to the WRDS server from the terminal on my computer. (Note that this code assumes you have a directory `.ssh` in your home directory. If not, log into WRDS via SSH, then type `mkdir ~/.ssh` to create this.) Here's code to create the key and send it to WRDS (for me):
+```
+ssh-keygen -t rsa
+cat ~/.ssh/id_rsa.pub | ssh iangow@wrds.wharton.upenn.edu "cat >> ~/.ssh/authorized_keys"
+```
+
 
 
