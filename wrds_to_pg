@@ -64,18 +64,19 @@ $sas_code = "
 	data schema(keep=name postgres_type);
 		set schema(keep=name format formatl formatd length type);
 		format postgres_type \\\$36.;
-		if format=\\\"TIME8.\\\" or prxmatch(\\\"/time/i\\\", format) 
-            then postgres_type=\\\"time\\\";
+		if prxmatch(\\\"/datetime/i\\\", format) then postgres_type=\\\"timestamp\\\";
+    else if format=\\\"TIME8.\\\" or prxmatch(\\\"/time/i\\\", format) 
+        then postgres_type=\\\"time\\\";
 		else if format=\\\"YYMMDDN\\\" or format=\\\"DATE9.\\\"
-            or prxmatch(\\\"/date/i\\\", format) 
-            or prxmatch(\\\"/yymmdd/i\\\", format) 
-            then postgres_type=\\\"date\\\";
-	  	else if type=1 then do;
-			if formatd ^= 0 then postgres_type = \\\"float8\\\";
-			if formatd = 0 and formatl ^= 0 then postgres_type = \\\"int8\\\";
-			if formatd = 0 and formatl =0 then postgres_type = \\\"float8\\\";
-	  	end;
-	  	else if type=2 then postgres_type = \\\"text\\\";
+        or prxmatch(\\\"/date/i\\\", format) 
+        or prxmatch(\\\"/yymmdd/i\\\", format) 
+        then postgres_type=\\\"date\\\";
+	  else if type=1 then do;
+		    if formatd ^= 0 then postgres_type = \\\"float8\\\";
+		    if formatd = 0 and formatl ^= 0 then postgres_type = \\\"int8\\\";
+		    if formatd = 0 and formatl =0 then postgres_type = \\\"float8\\\";
+	  end;
+	  else if type=2 then postgres_type = \\\"text\\\";
 	run;
 
 	* Now dump it out to a CSV file;
@@ -98,7 +99,13 @@ foreach $row (@result)	{
     
     my $type = @fields[1];
     chomp $type;
-    $var_type{$field} = $type;
+    if ($type eq "timestamp") {
+        # Need to fix timestamps below
+        $var_type{$field} = "text";
+    } else {
+       $var_type{$field} = $type;
+    } 
+    $true_var_type{$field} = $type;
 }
 
 ##################################################
@@ -217,6 +224,21 @@ print "Result of system command: $result\n";
 
 $tm=localtime;
 printf "Completed file import at %d:%02d:%02d\n",@$tm[2],@$tm[1],@$tm[0];
+
+# Fix date times. Imported as text and converted to PostgreSQL 
+# timestamps using regular expressions.
+foreach $field (split(',', $row)) {
+    
+    chomp $field;
+    # 
+    if ($true_var_type{$field} eq "timestamp") {
+      $sql = "ALTER TABLE $table_name ALTER $field TYPE timestamp USING";
+      $sql .= " regexp_replace($field,  '(\\d{2}[A-Z]{3}\\d{4}):', '\\1 ' )::timestamp";
+      $dbh->do($sql);
+    }
+}
+
+
 
 # Comment on table to reflect date it was updated
 my ($day,$month,$year)=($tm->mday(),$tm->mon(),$tm->year());
