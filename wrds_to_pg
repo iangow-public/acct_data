@@ -25,7 +25,8 @@ my $updated = '';
 GetOptions('fix-missing' => \$fix_missing,
             'wrds-id=s' => \$wrds_id,
             'dbname=s' => \$dbname,
-            'updated=s' => \$updated,); 
+            'updated=s' => \$updated,
+            'fix-cr' => \$fix_cr); 
 
 # Get schema and table name from command line. I have set my database
 # up so that these line up with the names of the WRDS library and data
@@ -178,6 +179,16 @@ $dbh->do($sql);
 $tm = localtime;
 printf "Beginning file import at %d:%02d:%02d\n",@$tm[2],@$tm[1],@$tm[0];
 
+if ($fix_cr) {
+    $fix_missing=1;
+    $fix_cr_code = "
+        array _char _character_;
+        do over _char;
+            _char = compress(_char, , 'kw');
+        end;"
+} else {
+    $fix_cr_code = "";
+}
 
 if ($fix_missing) {
     # If need to fix special missing values, then convert them to 
@@ -192,7 +203,9 @@ if ($fix_missing) {
       data pwd.schema;
           set $db$table_name;
           $dsf_fix
-
+          
+          $fix_cr_code
+          
           array allvars _numeric_ ;
 
            do over allvars;
