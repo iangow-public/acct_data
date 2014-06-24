@@ -104,7 +104,7 @@ replicate <- function(libname, datatable) {
 replicate("risk", "proposals")
 replicate("risk", "gset")
 replicate("risk", "rmgovernance")
-replicate("risk", "votes")
+# replicate("risk", "votes")
 
 system.time(temp <- get_data("risk", "proposals"))
 system.time(temp <- get_data("risk", "rmgovernance"))
