@@ -70,7 +70,8 @@ $sas_code = "
             or prxmatch(\\\"/date/i\\\", format) 
             or prxmatch(\\\"/yymmdd/i\\\", format) 
             then postgres_type=\\\"date\\\";
-	  	else if type=1 then do;
+        else if format=\\\"BEST\\\" then postgres_type=\\\"float8\\\";
+        else if type=1 then do;
 			if formatd ^= 0 then postgres_type = \\\"float8\\\";
 			if formatd = 0 and formatl ^= 0 then postgres_type = \\\"int8\\\";
 			if formatd = 0 and formatl =0 then postgres_type = \\\"float8\\\";
