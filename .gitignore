@@ -1,11 +1,5 @@
 .Rproj.user
 .Rhistory
 .RData
-data.csv.gz
-schema.csv
-
 *.swp
-
-data.csv
-
-ibes/get_iclink.Rout
+*.pdf

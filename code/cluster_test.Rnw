@@ -1,0 +1,105 @@
+\documentclass{article}
+
+\usepackage{tabularx}
+\usepackage{pdflscape}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{dcolumn}
+\usepackage{palatino}
+
+\begin{document}
+<<get_data, cache=FALSE, message=FALSE, echo=FALSE, results='hide'>>=
+require(xtable)
+require(plyr)
+
+# Tests of R function using Mitchell Petersen's test-data
+library(lmtest)
+
+# Read the data
+test <- read.table(
+      url(paste0("http://www.kellogg.northwestern.edu/",
+                 "faculty/petersen/htm/papers/se/",
+                 "test_data.txt")),
+    col.names=c("firmid", "Year", "x", "y"))
+#source("http://www.people.hbs.edu/igow/GOT/Code/cluster2.R")
+source("http://iangow.me/~igow/code/cluster2.R")
+
+# The fitted model
+fm <-    lm(y ~ x, data=test)
+
+# Tests
+se.ols   <- coeftest(fm)                                  # OLS
+se.white <- coeftest.cluster(test, fm)                    # White
+se.i     <- coeftest.cluster(test,fm, cluster1="firmid")  # Clustered by firm
+se.t     <- coeftest.cluster(test,fm, cluster1="Year")    # Clustered by year
+se.it    <- coeftest.cluster(test,fm, cluster1="firmid",  # Clustered by firm and year
+                             cluster2="Year")
+
+@
+
+\begin{table}[htb]
+\caption{Summary statistics}
+\label{tbl:summ}
+\medskip
+
+% Panel A
+\begin{minipage}[t]{\columnwidth}
+\begin{flushleft}
+Panel A: Descriptive statistics.\newline
+{\small Number of observations by year.}
+\end{flushleft}
+\end{minipage}
+\begin{center}
+<<panel_a, dependson=c("get_data"), results='asis', echo=FALSE>>=
+panel.a <- as.data.frame(table(test$Year))
+names(panel.a) <- c("Year", "N")
+print(xtable(panel.a), floating=FALSE, include.rownames=FALSE)
+@
+\end{center}
+
+% Panel B
+\medskip
+\begin{minipage}[t]{\columnwidth} \begin{flushleft}
+Panel B: Summary statistics by year. \newline
+{\small Descriptive statistics for $y$ by year.}
+\end{flushleft} \end{minipage}
+\begin{center}
+<<panel_b, dependson="get_data", results='asis', echo=FALSE>>=
+# Panel B
+panel.b <- ddply(test, .(Year), summarize,
+                 p25= quantile(y, probs=.25),
+                 p50= quantile(y, probs=.25),
+                 p75= quantile(y, probs=.25),
+                 mean= mean(y))
+print(xtable(panel.b), floating=FALSE, include.rownames=FALSE)
+@
+\end{center}
+\end{table}
+
+\begin{table}[ht]
+\caption{Regression table}
+\label{tbl:reg}
+\begin{tabular}[t]{c}
+\begin{minipage}[t]{\columnwidth}
+{\footnotesize
+This table uses the texreg package. But in a way that allows placement of a note above the table.
+\newline}
+\end{minipage} \tabularnewline
+<<tablulate_results, eval=TRUE, message=FALSE, echo=FALSE, results='asis'>>=
+# Tabulate results
+library(texreg)
+texreg(list(fm, fm, fm, fm, fm),
+      table = FALSE,
+      stars = c(0.01, 0.05, 0.1),
+      booktabs=TRUE, use.packages=FALSE, dcolumn=TRUE,
+      custom.model.names = c("OLS", "White", "Cl-$i$", "Cl-$t$", "Cl-2"),
+      override.se=  list(se.ols[,2], se.white[,2], se.i[,2], se.t[,2], se.it[,2]),
+      override.pval=list(se.ols[,4], se.white[,4], se.i[,4], se.t[,4], se.it[,4]))
+@
+\end{tabular}
+\label{reg-table}
+\end{table}
+
+\end{document}
+
+

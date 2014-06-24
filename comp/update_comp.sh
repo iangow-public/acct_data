@@ -15,7 +15,8 @@ cd ..
 ./wrds_to_pg_v2 comp.funda --fix-missing
 ./wrds_to_pg_v2 comp.fundq --fix-missing
 ./wrds_to_pg_v2 comp.g_sec_divid
-psql < comp.create_ciks.sql
-psql < ~/Dropbox/pg_backup/support/permissions.sql
+psql < comp/create_ciks.sql
+psql < comp/comp_indexes.sql
+psql < permissions.sql
 
-pg_dump --format custom --no-tablespaces --verbose --file ~/Dropbox/pg_backup/comp.backup --schema "comp" "crsp"
+# pg_dump --format custom --no-tablespaces --verbose --file ~/Dropbox/pg_backup/comp.backup --schema "comp" "crsp"

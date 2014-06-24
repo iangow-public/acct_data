@@ -25,7 +25,8 @@ my $updated = '';
 GetOptions('fix-missing' => \$fix_missing,
             'wrds-id=s' => \$wrds_id,
             'dbname=s' => \$dbname,
-            'updated=s' => \$updated,); 
+            'updated=s' => \$updated,
+            'fix-cr' => \$fix_cr); 
 
 # Get schema and table name from command line. I have set my database
 # up so that these line up with the names of the WRDS library and data
@@ -64,8 +65,9 @@ $sas_code = "
 	data schema(keep=name postgres_type);
 		set schema(keep=name format formatl formatd length type);
 		format postgres_type \\\$36.;
-		if format=\\\"TIME8.\\\" or prxmatch(\\\"/time/i\\\", format) 
-            then postgres_type=\\\"time\\\";
+		if prxmatch(\\\"/datetime/i\\\", format) then postgres_type=\\\"timestamp\\\";
+    else if format=\\\"TIME8.\\\" or prxmatch(\\\"/time/i\\\", format) 
+        then postgres_type=\\\"time\\\";
 		else if format=\\\"YYMMDDN\\\" or format=\\\"DATE9.\\\"
             or prxmatch(\\\"/date/i\\\", format) 
             or prxmatch(\\\"/yymmdd/i\\\", format) 
@@ -99,7 +101,13 @@ foreach $row (@result)	{
     
     my $type = @fields[1];
     chomp $type;
-    $var_type{$field} = $type;
+    if ($type eq "timestamp") {
+        # Need to fix timestamps below
+        $var_type{$field} = "text";
+    } else {
+       $var_type{$field} = $type;
+    } 
+    $true_var_type{$field} = $type;
 }
 
 ##################################################
@@ -172,6 +180,16 @@ $dbh->do($sql);
 $tm = localtime;
 printf "Beginning file import at %d:%02d:%02d\n",@$tm[2],@$tm[1],@$tm[0];
 
+if ($fix_cr) {
+    $fix_missing=1;
+    $fix_cr_code = "
+        array _char _character_;
+        do over _char;
+            _char = compress(_char, , 'kw');
+        end;"
+} else {
+    $fix_cr_code = "";
+}
 
 if ($fix_missing) {
     # If need to fix special missing values, then convert them to 
@@ -186,7 +204,9 @@ if ($fix_missing) {
       data pwd.schema;
           set $db$table_name;
           $dsf_fix
-
+          
+          $fix_cr_code
+          
           array allvars _numeric_ ;
 
            do over allvars;
@@ -218,6 +238,21 @@ print "Result of system command: $result\n";
 
 $tm=localtime;
 printf "Completed file import at %d:%02d:%02d\n",@$tm[2],@$tm[1],@$tm[0];
+
+# Fix date times. Imported as text and converted to PostgreSQL 
+# timestamps using regular expressions.
+foreach $field (split(',', $row)) {
+    
+    chomp $field;
+    # 
+    if ($true_var_type{$field} eq "timestamp") {
+      $sql = "ALTER TABLE $table_name ALTER $field TYPE timestamp USING";
+      $sql .= " regexp_replace($field,  '(\\d{2}[A-Z]{3}\\d{4}):', '\\1 ' )::timestamp";
+      $dbh->do($sql);
+    }
+}
+
+
 
 # Comment on table to reflect date it was updated
 my ($day,$month,$year)=($tm->mday(),$tm->mon(),$tm->year());
