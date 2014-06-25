@@ -22,11 +22,13 @@ use Env qw($PGDATABASE);
 my $wrds_id = 'iangow';my $dbname = $PGDATABASE;
 my $fix_missing = '';
 my $updated = '';
+my $drop = '';
 GetOptions('fix-missing' => \$fix_missing,
             'wrds-id=s' => \$wrds_id,
             'dbname=s' => \$dbname,
             'updated=s' => \$updated,
-            'fix-cr' => \$fix_cr); 
+            'fix-cr' => \$fix_cr,
+            'drop=s' => \$drop); 
 
 # Get schema and table name from command line. I have set my database
 # up so that these line up with the names of the WRDS library and data
@@ -35,7 +37,11 @@ GetOptions('fix-missing' => \$fix_missing,
 
 $db_schema = $table_args[0];
 $table_name = $table_args[1];
+$pg_table = $table_name;
 
+if ($drop ne '') {
+  $table_name = "$table_name(drop=$drop)";
+}
 
 $db = "$db_schema.";
 
@@ -53,42 +59,48 @@ $sas_code = "
     
     libname pwd '.';  
 
-	* Edit the following to refer to the table of interest;
-	%let db=$db;
-	%let table_name= $table_name;
+    * Edit the following to refer to the table of interest;
+    %let db=$db;
+    %let table_name=$pg_table;
+    
+    data pwd.schema;
+        set $db$pg_table(drop=$drop obs=1);
+    run;
 
-	* Use PROC CONTENTS to extract the information desired.;
-	proc contents data=&db&table_name out=schema noprint;
-	run;
+    * Use PROC CONTENTS to extract the information desired.;
+    proc contents data=pwd.schema out=schema noprint;
+    run;
 
-	* Do some preprocessing of the results;
-	data schema(keep=name postgres_type);
-		set schema(keep=name format formatl formatd length type);
-		format postgres_type \\\$36.;
-		if prxmatch(\\\"/datetime/i\\\", format) then postgres_type=\\\"timestamp\\\";
-    else if format=\\\"TIME8.\\\" or prxmatch(\\\"/time/i\\\", format) 
-        then postgres_type=\\\"time\\\";
-		else if format=\\\"YYMMDDN\\\" or format=\\\"DATE9.\\\"
-            or prxmatch(\\\"/date/i\\\", format) 
-            or prxmatch(\\\"/yymmdd/i\\\", format) 
-            then postgres_type=\\\"date\\\";
-        else if format=\\\"BEST\\\" then postgres_type=\\\"float8\\\";
-        else if type=1 then do;
-			if formatd ^= 0 then postgres_type = \\\"float8\\\";
-			if formatd = 0 and formatl ^= 0 then postgres_type = \\\"int8\\\";
-			if formatd = 0 and formatl =0 then postgres_type = \\\"float8\\\";
-	  	end;
-	  	else if type=2 then postgres_type = \\\"text\\\";
-	run;
+    * Do some preprocessing of the results;
+    data schema(keep=name postgres_type);
+      set schema(keep=name format formatl formatd length type);
+      format postgres_type \\\$36.;
+      if prxmatch('/datetime/i', format) then postgres_type='timestamp';
+      else if format='TIME8.' or prxmatch('/time/i', format) 
+          then postgres_type='time';
+      else if format='YYMMDDN' or format='DATE9.'
+              or prxmatch('/date/i', format) 
+              or prxmatch('/yymmdd/i', format) 
+              then postgres_type='date';
+          else if format='BEST' then postgres_type='float8';
+          else if type=1 then do;
+        if formatd ^= 0 then postgres_type = 'float8';
+        if formatd = 0 and formatl ^= 0 then postgres_type = 'int8';
+        if formatd = 0 and formatl =0 then postgres_type = 'float8';
+        end;
+        else if type=2 then postgres_type = 'text';
+    run;
 
-	* Now dump it out to a CSV file;
-	proc export data=schema outfile=stdout dbms=csv;
-	run;";
+    * Now dump it out to a CSV file;
+    proc export data=schema outfile=stdout dbms=csv;
+    run;";
 
 # Run the SAS code on the WRDS server and save the result to @result
 $cmd = "echo \"$sas_code\" | ";
 $cmd .= "ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas  -stdio -noterminal ' 2>/dev/null";
 @result = `$cmd`;
+print "$cmd\n\n";
+print "@result\n\n";
 
 # Now fill an array with the names and data type of each variable 
 my %var_type;
@@ -118,27 +130,28 @@ foreach $row (@result)	{
 # Get the first row of the SAS data file from WRDS. This is important,
 # as we need to put the table together so as to align the fields with the data
 # (the "schema" code above doesn't do this for us).
+
 $sas_code = "
     options nosource nonotes;
     
-    proc export data=$db$table_name(obs=1)
+    proc export data=pwd.schema
         outfile=stdout
         dbms=csv;
     run;";
 
 # Run the SAS command and get the first row of the table
 $cmd = "echo \"$sas_code\" | ";
-$cmd .= "ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas  -stdio -noterminal ' 2>/dev/null";
+$cmd .= "ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal ' 2>/dev/null";
 $cmd .= "| head -n 1";
-# print "$cmd\n";
 print "Getting schema for $db_schema.$table_name\n";
 $row = `$cmd`;
+print "$row\n\n";
 
 ##################################################
 # 3. Construct and run CREATE TABLE statement    #
 ##################################################
 
-$sql = "CREATE TABLE $table_name (";
+$sql = "CREATE TABLE $db_schema.$pg_table (";
 
 # Set some default/initial parameters
 $first_field = 1;
@@ -170,7 +183,7 @@ $dbh->do("SET search_path TO $db_schema");
 # using field names taken from the first row
 $dbh->do("
     CREATE SCHEMA IF NOT EXISTS $db_schema; 
-    DROP TABLE IF EXISTS $table_name CASCADE;");
+    DROP TABLE IF EXISTS $pg_table CASCADE;");
 $dbh->do($sql);
 
 ##################################################################
@@ -191,7 +204,7 @@ if ($fix_cr) {
     $fix_cr_code = "";
 }
 
-if ($fix_missing) {
+if ($fix_missing | $drop ne '') {
     # If need to fix special missing values, then convert them to 
     # regular missing values, then run PROC EXPORT
     $dsf_fix =  ($table_name eq "dsf" ? "format numtrd 8.;\n" : "");
@@ -202,7 +215,7 @@ if ($fix_missing) {
       
       * Fix missing values;
       data pwd.schema;
-          set $db$table_name;
+          set $db$pg_table(drop=$drop);
           $dsf_fix
           
           $fix_cr_code
@@ -230,8 +243,8 @@ if ($fix_missing) {
 # Use PostgreSQL's COPY function to get data into the database
 $cmd = "echo \"$sas_code\" | ";
 $cmd .= "ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal' 2>/dev/null | ";
-$cmd .= "psql -d $dbname -c \"COPY $db_schema.$table_name FROM STDIN CSV HEADER ENCODING 'latin1' \"";
-# print "$cmd\n";
+$cmd .= "psql -d $dbname -c \"COPY $db_schema.$pg_table FROM STDIN CSV HEADER ENCODING 'latin1' \"";
+
 print "Importing data into $db_schema.$table_name.\n";
 $result = system($cmd);
 print "Result of system command: $result\n";
@@ -246,7 +259,7 @@ foreach $field (split(',', $row)) {
     chomp $field;
     # 
     if ($true_var_type{$field} eq "timestamp") {
-      $sql = "ALTER TABLE $table_name ALTER $field TYPE timestamp USING";
+      $sql = "ALTER TABLE $pg_table ALTER $field TYPE timestamp USING";
       $sql .= " regexp_replace($field,  '(\\d{2}[A-Z]{3}\\d{4}):', '\\1 ' )::timestamp";
       $dbh->do($sql);
     }
@@ -260,6 +273,6 @@ if ($updated eq "") {
     $updated = sprintf( "Table updated on %d-%02d-%02d.", 1900+$year, 1+$month, $day);
 }
 print "$updated\n";
-$dbh->do("COMMENT ON TABLE $table_name IS '$updated'");
+$dbh->do("COMMENT ON TABLE $pg_table IS '$updated'");
 $dbh->disconnect();
 

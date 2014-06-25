@@ -26,7 +26,8 @@ my $fix_cr = '';
 GetOptions('fix-missing' => \$fix_missing,
             'wrds-id=s' => \$wrds_id,
             'dbname=s' => \$dbname,
-            'fix-cr' => \$fix_cr); 
+            'fix-cr' => \$fix_cr,
+            'drop=s' => \$drop); 
 
 # Get schema and table name from command line. I have set my database
 # up so that these line up with the names of the WRDS library and data
@@ -112,6 +113,7 @@ if ($modified ne $comment) {
     $cmd = "./wrds_to_pg $db_schema.$table_name"; 
     $cmd .= ($fix_missing eq '' ? '' : ' --fix-missing');
     $cmd .= ($fix_cr eq '' ? '' : ' --fix-cr');
+    $cmd .= ($drop eq '' ? '' : " --drop='$drop'");
     $cmd .= " --wrds-id=$wrds_id --dbname=$dbname --updated=\"$modified\"";
     print "Updated $db_schema.$table_name is available. Getting from WRDS.\n";
     system($cmd);
