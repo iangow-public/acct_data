@@ -99,8 +99,6 @@ $sas_code = "
 $cmd = "echo \"$sas_code\" | ";
 $cmd .= "ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas  -stdio -noterminal ' 2>/dev/null";
 @result = `$cmd`;
-print "$cmd\n\n";
-print "@result\n\n";
 
 # Now fill an array with the names and data type of each variable 
 my %var_type;
@@ -145,7 +143,6 @@ $cmd .= "ssh -C $wrds_id\@wrds.wharton.upenn.edu 'sas -stdio -noterminal ' 2>/de
 $cmd .= "| head -n 1";
 print "Getting schema for $db_schema.$table_name\n";
 $row = `$cmd`;
-print "$row\n\n";
 
 ##################################################
 # 3. Construct and run CREATE TABLE statement    #
