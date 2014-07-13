@@ -63,5 +63,5 @@ system("
     ./wrds_to_pg_v2 crsp.ccmxpf_lnkused --fix-missing;
     ./wrds_to_pg_v2 crsp.dsedist --fix-missing;
     ./wrds_to_pg_v2 crsp.fund_names --fix-missing;
-    psql -f crsp/fix_o_permnos.sql")
+    psql -f crsp/crsp_fix_permnos.sql")
 
