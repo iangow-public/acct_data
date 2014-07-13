@@ -1,0 +1,218 @@
+R code to implement the Imbens-Kalyanaraman bandwidth selection in RDD
+========================================================
+This is some work I did one weekend (2012-06-17) to reconcile the estimates of optimal bandwidth provided by code written by [Devin Caughey](http://web.mit.edu/caughey/www/Site/Code.html "Devin's code") and code provided on [Guido Imbens' website](http://faculty-gsb.stanford.edu/imbens).
+
+First, let's get some test data.
+```{r get_data, warning=FALSE}
+
+url <- "http://faculty-gsb.stanford.edu/imbens"
+url <- paste(url, "documents/art_sharp_rd.txt", sep="/")
+rd_sharp_data <- read.fwf(url, header=FALSE, widths=rep(10,6),
+                          col.names=c("y", "x", paste("z", 1:4, sep="")))
+rd_sharp_data <- rd_sharp_data[1:1000,]
+c <- 0.2990
+```
+
+When I first tried [Devin Caughey's code](http://web.mit.edu/caughey/www/Site/Code.html "Devin's code"), I got a very different (i.e., about **three times larger**) bandwidth from that given by code Guido Imbens's site ($latex 0.6700$) and by the code provided [here](http://rpubs.com/iangow/rd_opt_bw) (and explained in the discussion below). It turns out that the code on Guido's site has a step that isn't documented in the forthcoming paper: ``We estimate this global cubic regression function by dropping observations with covariate values below the median of the covariate for observations with covariate values below the threshold, and dropping observations with covariate values above the median of the covariate for observations with covariate values above the threshold.'' Devin's code *was* following the paper and thus was yielding a very different bandwidth calculation. However, it seems that this difference has been removed and the estimates are quite similar now (Devin's code now contains an option to follow the paper, but defaults to the approach of the Matlab/Stata code).
+
+```{r devin_test}
+source("http://web.mit.edu/caughey/www/Site/Code_files/rdoptband_catch.R")
+rdoptband_catch(rd_sharp_data$x, rd_sharp_data$y, cutpoint=c)
+```
+But Devin's code offers the option to follow the procedure documented in the paper.
+```{r devin_test2}
+rdoptband_catch(rd_sharp_data$x, rd_sharp_data$y, cutpoint=c, median_subset=FALSE)
+```
+For comparison, here is the output from the code documented below. The differences that remain between this code and Devin's largely relate to Devin's implicit use of $latex \frac{n}{n-1}$ degrees-of-freedom corrections in variance calculations (he uses R's `var` function) and in my use of a single value for the numerator of both $latex h_{2,−}$ and $latex h_{2,+}$, whereas Devin uses different estimates for each.
+```{r ian_test}
+source("http://iangow.me/~igow/rd_opt_bw.R")
+rd_opt_bw(rd_sharp_data$y, rd_sharp_data$x, c)
+```
+
+In the following, I adapt the example supplied [here](http://faculty-gsb.stanford.edu/imbens/documents/rd_matlab_09aug4.zip) using code snippets from Devin Caughey in an attempt to create R code that matches the results of the Matlab and Stata code available on Imbens' site and [here](http://ideas.repec.org/c/boc/bocode/s456888.html). Note that my estimate of the treatment effect differ slightly from those on Guido's site  because I am following simpler approach of Caughey's in estimation (i.e., using R's `lm` routine with a weighting based on the triangular kernel).
+
+In this section I follow the intermediate steps detailed (and source much of the text below from) [here](http://faculty-gsb.stanford.edu/imbens/documents/rd_matlab_09aug4.zip).
+There are `r dim(rd_sharp_data)[1]` observations, with `r sum(rd_sharp_data$x < c)` where  $latex X_i < c$, and `r sum(rd_sharp_data$x >= c)` with $latex X_i \geq c$, where $latex c=$`r c`.
+
+Step 1: Estimation of density $latex f(c)$ and conditional variance $latex \sigma^2(c)$
+-------------------------
+We start with the modified Silverman bandwidth, 
+```{r step_1}
+  ## Collect the data
+  X <- rd_sharp_data$x
+  y <- rd_sharp_data$y
+  Z <- rd_sharp_data[,3:6]
+
+  ### (1) Estimation of density (f.hat.c) and conditional variance (S.hat_c ^ 2) 
+  Sx <- sd(X)
+  N <- length(X)
+  N.pos <- sum(X >= c)
+  N.neg <- sum(X < c)
+  h1 <- 1.84 * Sx * (N ^ -0.2)
+
+  ## Calculate the number of units on either side of the threshold,
+  ## and the average outcomes on either side.
+  i_plus  <- (X <= c + h1) & (X >= c)
+  i_minus <- (X >= c - h1) & (X < c)
+
+  ## Estimate the density of the forcing variable at the cutpoint
+  f.hat.c <- (sum(i_plus) + sum(i_minus))/(2 * N * h1)
+
+  ## Take the average of the conditional variances of Yi given
+  ## Xi = x, at x = c, from the left and the right
+  sigmas <- mean(c(y[i_plus] - mean(y[i_plus]), y[i_minus] - mean(y[i_minus]))^2)
+```
+leading to $latex \hat{f}(c) =$ `r f.hat.c` and $latex \hat{\sigma}^2(c) =$ `r sigmas`.
+
+Step 2: Estimation of second derivatives $latex \hat{m}_{+}^{(2)}(c)$ and $latex \hat{m}_{-}^{(2)}(c)$
+---------
+To estimate the curvature at the threshold, we first need to choose bandwidths $latex h_{2,+}$ and $latex h_{2,−}$. We choose these bandwidths based on an estimate of $latex \hat{m}^3(c)$, obtained by fitting a global cubic with a jump at the threshold. We estimate this global cubic regression function by dropping observations with covariate values below the median of the covariate for observations with covariate values below the threshold, and dropping observations with covariate values above the median of the covariate for observations with covariate values above the threshold. For the 617 (383) observations with $latex X_i < c$ ($latex X_i \geq c$), the median of the forcing variable is `r median(X[X<c])` (`r median(X[X>=c])`). Next, we estimate, using the data with $latex X_i \in [−0.5418, 0.8224]$, the polynomial regression function of order three, with a jump at the threshold of $latex c = 0.2990$:
+
+$$latex Y_i =\gamma_0 + \gamma_1 X_i + \gamma_0 X_i^2 + \gamma_0 X_i^3 +\gamma_4 ·1_{X_i \geq c} + \epsilon_i. $$
+
+```{r step_2, tidy=FALSE}
+step_2_data <- as.data.frame(cbind(y, X, X_d=X-c))
+step_2_lm <- lm(y ~ X_d+ I(X_d^2) + I(X_d^3) + (X>=c), data=step_2_data,
+                subset=X >= median(X[X<c]) & X <= median(X[X>=c]))
+m3hat.c <- 6 * coef(step_2_lm)[4]
+```
+The least squares estimate for $latex \gamma_3$ is `r coef(step_2_lm)[4]`, and thus the third derivative at $c$ is estimated as 
+$latex \hat{m}^{(3)}(c) = 6 \times \hat{\gamma}_3 = $`r m3hat.c`. 
+ 
+```{r h2.pos_and_neg} 
+h2.pos  <- ((sigmas / (f.hat.c * m3hat.c ^ 2)) ^ (1/7) *
+             3.56 * (N.pos ^ (-1/7)))
+h2.neg <- ((sigmas / (f.hat.c * m3hat.c ^ 2)) ^ (1/7) *
+             3.56 * (N.neg ^ (-1/7)))
+```
+This leads to the two bandwidths
+$latex h_{2,−} = $ `r h2.neg`,  and $latex h_{2,+} = $ `r h2.pos`.
+The two pilot bandwidths are used to fit two quadratics. 
+
+```{r m2.c}
+    ## Given the pilot bandwidths h2.pos and h2.neg, we estimate the
+    ## curvature m(2)(c) by a local quadratic
+    lm.h2.pos <- lm(y ~ X + I(X^2), data=step_2_data, 
+                  subset= X >= c & X <= h2.pos + c)
+    m2hat.pos.c <- 2 * coef(lm.h2.pos)[3]
+    N2.pos <- length(lm.h2.pos$residuals)
+
+    lm.h2.neg <- lm(y ~ X + I(X^2), data=step_2_data, 
+                  subset= X >= c - h2.neg & X < c)
+    m2hat.neg.c <- 2 * coef(lm.h2.neg)[3]
+    N2.neg <- length(lm.h2.neg$residuals)
+```
+
+The quadratic to the right (left) of $latex c = $ `r c` is fitted on $[`r sprintf("%4.3f, %4.3f", c, h2.pos + c)`]$ ($[`r sprintf("%4.3f, %4.3f", c-h2.neg, c)`]$), yielding
+$latex \hat{m}^{(2)}_{-}(c)=$ `r m2hat.neg.c`,	and $latex \hat{m}^{(2)}_{+}(c)=$ `r m2hat.pos.c`.
+
+Step 3: Calculation of $latex \hat{r}^{-}$ and $latex \hat{r}^{+}$, and $latex \hat{h}_{\text{opt}}$
+-----------------
+Next, the regularization terms are calculated. We obtain
+
+$$latex \hat{r}^{-} = \frac{720 \cdot \hat{\sigma}^2(c)}{N_{2,-} \cdot (h_{2,-})^4} \text{ and } \hat{r}^{-} =  \frac{720 \cdot \hat{\sigma}^2(c)}{N_{2,+} \cdot (h_{2,+})^4} $$
+Now we have all the ingredients to calculate the optimal bandwidth under different kernels and the corresponding RD estimates. 
+
+```{r reg_terms}
+    ### (3) Calculation of regulation terms.
+    r.hat.neg <- (720 * sigmas) / (N2.neg * h2.neg ^ 4)
+    r.hat.pos <- (720 * sigmas) / (N2.pos * h2.pos ^ 4)
+```
+We obtain $latex \hat{r}^{-} =$ `r r.hat.neg` and  $latex \hat{r}^{+} =$ `r r.hat.pos`.
+
+```{r opt_h}
+  ### (3) Calculation of optimal h.
+  C_k <- 3.4375
+  h.opt <- C_k*((2*sigmas/(f.hat.c*
+    ((m2hat.pos.c-m2hat.neg.c)^2+r.hat.pos+r.hat.neg)))^(1/5))*(N^(-1/5))
+```
+Using the edge kernel, with $latex C_K = $ `r C_k`, we obtain $latex \hat{h}_{\text{opt}} = $ `r h.opt`.
+
+Now the calculation of optimal bandwidth requires only $latex y$, $latex X$, and $latex c$ (assuming we're using a triangular kernel), so we can put this calculation into [a separate function](http://rpubs.com/iangow/rd_opt_bw).
+```{r source_function}
+source("http://iangow.me/~igow/rd_opt_bw.R")
+````
+
+Estimation and inference
+------------
+
+Now we can simply do local linear regression using the following weighting function for each observation $latex i$, 
+
+$$latex \lambda_i = K \left( \frac{X_i - c}{h} \right) = \left( 1 - \frac{|X_i - c|}{h} \right) 1_{|X_i-c| \leq h}.$$
+<!-- and let $\overline{Z}_{\lambda}$ be the weighted average of the covariates.
+$$latex \overline{Z}_{\lambda} = \frac{\sum_{i=i}^N \lambda_i \cdot Z_i}{\sum_{i=1}^N \lambda_i}. $$ -->
+```{r estimation}
+    ### (4) Calculate the treatment effect and standard errors.
+    
+    # First, get bandwidth
+    h <- with(rd_sharp_data, rd_opt_bw(y, x, c))
+    
+    ## Weights based on triangular kernel
+    wgts <- (1 - abs(X-c) / h) * (abs(X-c) <= h)
+    local.lm <- lm(y ~ (x >=c) * I(x-c) , 
+                 weights = wgts, data=rd_sharp_data)    
+
+    rd.est <- coef(local.lm)[[2]]
+    sd.est <- sqrt(vcov(local.lm)[2, 2])
+     
+    ## Output
+    out <- c(h, rd.est, sd.est, rd.est/sd.est)
+    names(out) <- c("Optimal Bandwidth", "RD Estimate", 
+                    "Standard Error", "t-statistic")
+    print(out)
+```
+
+A plot of the data with fitted values
+------------
+
+Below I provide a plot of the data with fitted values based on locally linear kernel estimates for each value of $latex X$ using the bandwidth calculated above. While the bandwidth is optimized at the cutoff, there seems to be merit in visually inspecting the resulting kernel estimates for all values of $latex X$.
+```{r plot, warning=FALSE, fig.width=10}
+    # A function to estimate local linear regression around a point (x_i) using
+    # bandwidth h, the triangular kernel and limiting observations to those on
+    # the same side of the cutoff c. In some sense, this is purely visual, as
+    # the IK bandwidth is optimized for x \in [c-h, c+h] and other data are not
+    # involved.
+    ll <- function(x_i, y, x, h, c) {
+        wgts <- (1 - abs(x-x_i) / h) * (abs(x-x_i) <= h) * 
+            (sign(x_i-c)==sign(x-c) | x_i==c)
+        lm.fitted <- lm(y ~  x , weights = wgts)
+        if(sum(wgts>0)>10) { # Require 10 observations around x_i
+            return(predict(lm.fitted, newdata=data.frame(x=x_i)))
+        } else {
+            return(NA)
+        }
+    }
+
+    # Add the fitted value to the dataset
+    rd_sharp_data$y_fitted <- unlist(lapply(X, ll, y, X, h, c))
+    
+    # Make a plot
+    library(ggplot2)
+    ggplot(rd_sharp_data, aes(x)) + 
+        geom_point(aes(y=y, color=x>c)) + 
+        geom_line(aes(y=y_fitted, color=x>c))
+```
+
+Bootstrapping standard errors
+------------
+
+An alternative approach to calculating standard errors uses bootstrapping
+
+```{r bootstrap}
+library(boot)
+
+local.lm.boot <- function(data, f) {
+   # First, get bandwidth
+    h <- with(data[f,], rd_opt_bw(y, x, c))
+    
+    ## Weights based on triangular kernel
+    wgts <- (1 - abs(data$x[f]-c) / h) * (abs(data$x[f]-c) <= h)
+    local.lm <- lm(y ~ (x >=c) * I(x-c) , 
+               weights = wgts[f], data=data[f,])    
+
+  rd.est <- coef(local.lm)[[2]]
+  return(rd.est)
+}
+
+boot(rd_sharp_data, local.lm.boot, R=100)
+```
