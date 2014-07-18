@@ -23,5 +23,8 @@ cd ..
 ./wrds_to_pg_v2 dealscan.performancepricing
 ./wrds_to_pg_v2 dealscan.performancepricingcomments
 ./wrds_to_pg_v2 dealscan.sublimits
+./wrds_to_pg_v2 dealscan.link_table
+./wrds_to_pg_v2 dealscan.link_table
+./wrds_to_pg_v2 dealscan.dbo_df_fac_dates_data
 
 pg_dump --format custom --no-tablespaces --verbose --file ~/Dropbox/pg_backup/dealscan.backup --schema "dealscan" "crsp"
