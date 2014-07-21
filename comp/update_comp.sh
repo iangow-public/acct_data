@@ -19,4 +19,4 @@ psql < comp/create_ciks.sql
 psql < comp/comp_indexes.sql
 psql < permissions.sql
 
-# pg_dump --format custom --no-tablespaces --verbose --file ~/Dropbox/pg_backup/comp.backup --schema "comp" "crsp"
+pg_dump --format custom --no-tablespaces --verbose --file ~/Dropbox/pg_backup/comp.backup --schema "comp" "crsp"
