@@ -17,7 +17,7 @@ getTables <- function(schema) {
     
     pg_iangow_me <- dbGetQuery(pg, sql)
     dbDisconnect(pg)
-    pg <- dbConnect(PostgreSQL(), host="199.94.4.134")
+    pg <- dbConnect(PostgreSQL(), host="localhost") # 199.94.4.134")
     
     pg_hack <- dbGetQuery(pg, sql)
     dbDisconnect(pg)
@@ -27,6 +27,9 @@ getTables <- function(schema) {
     return(merged)
 }
 
-temp <- getTables("filings")
+temp <- getTables("comp")
 subset(temp, description_mp!=description_hack | is.na(description_mp) |  is.na(description_hack))
+
+
+
 temp
