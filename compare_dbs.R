@@ -1,6 +1,7 @@
 getTables <- function(schema) {
     sql <- paste0("
-        SELECT c.relname as name,  c.reltuples::bigint AS rows, d.description,
+        SELECT c.relname as name,  c.reltuples::bigint AS rows, 
+            d.description AS desc,
             pg_catalog.pg_get_userbyid(c.relowner) as owner
         FROM pg_catalog.pg_class c
         LEFT JOIN pg_catalog.pg_namespace n 
@@ -17,19 +18,16 @@ getTables <- function(schema) {
     
     pg_iangow_me <- dbGetQuery(pg, sql)
     dbDisconnect(pg)
-    pg <- dbConnect(PostgreSQL(), host="localhost") # 199.94.4.134")
+    pg <- dbConnect(PostgreSQL(), host="localhost")
     
     pg_hack <- dbGetQuery(pg, sql)
     dbDisconnect(pg)
     
     merged <- merge(pg_iangow_me, pg_hack, by="name",  all=TRUE, 
-                    suffixes = c("_mp", "_hack"))
+                    suffixes = c("_mp", "_local"))
     return(merged)
 }
 
-temp <- getTables("comp")
-subset(temp, description_mp!=description_hack | is.na(description_mp) |  is.na(description_hack))
-
-
-
+temp <- getTables("issvoting")
+subset(temp, desc_mp!=desc_local | is.na(desc_mp) |  is.na(desc_local))
 temp
