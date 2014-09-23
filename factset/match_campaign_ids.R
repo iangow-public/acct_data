@@ -131,8 +131,6 @@ sql <- "
 
 date_changes <- dbGetQuery(pg, sql)
 
-
-
 sql <- "
     SELECT cusip_9_digit, dissident_group, announce_date, campaign_id
     FROM factset.sharkwatch_new AS a
@@ -143,8 +141,17 @@ sql <- "
 
 still_matched <- dbGetQuery(pg, sql)
 
-all_matches <- rbind(still_matched, auto_matched, manual_matched, cusip_changes, 
-                     dissident_changes_checked)
+require(RCurl)
+csv_file <- getURL(paste0("https://docs.google.com/spreadsheet/pub?",
+                         "key=0AvP4wvS7Nk-QdGRjNFdtZ1dUbTRNS0FIQnhCLXZobWc",
+                         "&single=true&gid=3&output=csv"),
+                   verbose=FALSE)
+manual_matches <- read.csv(textConnection(csv_file), as.is=TRUE)
+manual_matches$announce_date <- as.Date(manual_matches$announce_date)
+
+all_matches <- rbind(manual_matches, still_matched, auto_matched, 
+                     manual_matched, cusip_changes, dissident_changes_checked)
+
 all_matches <- unique(all_matches)
 rs <- dbWriteTable(pg, name=c("factset", "campaign_ids"), all_matches,
                    overwrite=TRUE, row.names=FALSE)
@@ -153,13 +160,22 @@ rs <- dbGetQuery(pg, "ALTER TABLE factset.campaign_ids OWNER TO activism")
 
 match_check <- dbGetQuery(pg, "
     SELECT DISTINCT cusip_9_digit, dissident_group, announce_date, campaign_id
-    FROM activist_director.activism_events
-    -- FROM factset.sharkwatch_old AS a
+    -- xFROM activist_director.activism_events
+    FROM factset.sharkwatch_old AS a
     LEFT JOIN factset.campaign_ids
-    USING (cusip_9_digit, dissident_group, announce_date)")
+    USING (cusip_9_digit, dissident_group, announce_date)
+    WHERE campaign_id IS NULL AND cusip_9_digit IS NOT NULL
+    -- UNION
+    -- SELECT DISTINCT cusip_9_digit, dissident_group, announce_date, campaign_id
+    -- FROM targeted.activism_events
+    -- FROM factset.sharkwatch_old AS a
+    -- LEFT JOIN factset.campaign_ids
+    -- USING (cusip_9_digit, dissident_group, announce_date)
+    -- WHERE campaign_id IS NULL AND cusip_9_digit IS NOT NULL
+")
 
-write.csv(unique(subset(rbind(targeted_check, match_check), is.na(campaign_id))),
-          file="~/Google Drive/activism/data/other_unmatched.csv", row.names=FALSE)
+# write.csv(match_check,
+#           file="~/Google Drive/activism/data/other_unmatched.csv", row.names=FALSE)
 dbDisconnect(pg)
 
 
