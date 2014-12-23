@@ -1,12 +1,25 @@
 # Get corrected data on board-related activism from Google Sheets document ----
-require(RCurl)
-csv_file <- getURL(paste0("https://docs.google.com/spreadsheet/pub?",
-                          "key=0AvP4wvS7Nk-QdGRjNFdtZ1dUbTRNS0FIQnhCLXZobWc", 
-                          "&single=true&gid=1&output=csv"),
-                   verbose=FALSE)
-manual_matched <- read.csv(textConnection(csv_file), as.is=TRUE)
-manual_matched$campaign_id <- manual_matched$matched_campaign_id
-manual_matched <- subset(manual_matched, !is.na(matched_campaign_id), 
+
+# Function to retrieve a Google Sheets document
+getSheetData = function(key, gid=NULL) {
+    library(RCurl)
+    url <- paste0("https://docs.google.com/spreadsheets/d/", key,
+                  "/export?format=csv&id=", key, if (is.null(gid)) "" else paste0("&gid=", gid),
+                  "&single=true")
+    csv_file <- getURL(url, verbose=FALSE)
+    the_data <- read.csv(textConnection(csv_file), as.is=TRUE)
+    return( the_data )
+}
+
+
+# Get PERMNO-CIK data
+key='1EwA6xCOPV2DgUNc5REasufqtczvmJo4vX77dbgT83kk'
+
+#### Sharkwatch 50 ####
+# Import Dataset from Google Drive ----
+manual_matched <- getSheetData(key, gid=1213453107)
+
+manual_matched <- subset(manual_matched, !is.na(campaign_id), 
                      select=c(cusip_9_digit, dissident_group, announce_date,
                               campaign_id))
 manual_matched$announce_date <- as.Date(manual_matched$announce_date)
@@ -141,15 +154,11 @@ sql <- "
 
 still_matched <- dbGetQuery(pg, sql)
 
-require(RCurl)
-csv_file <- getURL(paste0("https://docs.google.com/spreadsheet/pub?",
-                         "key=0AvP4wvS7Nk-QdGRjNFdtZ1dUbTRNS0FIQnhCLXZobWc",
-                         "&single=true&gid=3&output=csv"),
-                   verbose=FALSE)
-manual_matches <- read.csv(textConnection(csv_file), as.is=TRUE)
-manual_matches$announce_date <- as.Date(manual_matches$announce_date)
 
-all_matches <- rbind(manual_matches, still_matched, auto_matched, 
+other_unmatched <- getSheetData(key, gid=834461479)
+other_unmatched$announce_date <- as.Date(other_unmatched$announce_date)
+
+all_matches <- rbind(other_unmatched, still_matched, auto_matched, 
                      manual_matched, cusip_changes, dissident_changes_checked)
 
 all_matches <- unique(all_matches)
@@ -160,8 +169,8 @@ rs <- dbGetQuery(pg, "ALTER TABLE factset.campaign_ids OWNER TO activism")
 
 match_check <- dbGetQuery(pg, "
     SELECT DISTINCT cusip_9_digit, dissident_group, announce_date, campaign_id
-    -- xFROM activist_director.activism_events
-    FROM factset.sharkwatch_old AS a
+    FROM activist_director.activism_events
+    -- FROM factset.sharkwatch_old AS a
     LEFT JOIN factset.campaign_ids
     USING (cusip_9_digit, dissident_group, announce_date)
     WHERE campaign_id IS NULL AND cusip_9_digit IS NOT NULL

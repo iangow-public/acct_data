@@ -60,7 +60,8 @@ for (i in 1:(dim(sharkwatch)[2])) {
 # Convert dates
 for (i in grep("date", names(sharkwatch), value=TRUE)) {
     cat(i, "\n")
-    sharkwatch[, i] <- as.Date(sharkwatch[,i])
+    sharkwatch[sharkwatch[,i]=="",i] <- NA
+    sharkwatch[, i] <- as.Date(sharkwatch[, i])
 }
 
 trim <- function(string) {
@@ -76,10 +77,18 @@ sharkwatch$sharkwatch50 <-
     trim(gsub("^.*SharkWatch50\\?: (.*?) Holder Type: .*$", "\\1",
               sharkwatch$dissident_group_with_sharkwatch50_and_holder_type))
 
+
+fixCUSIPs <- function(cusips) {
+    to.fix <- nchar(cusips) < 9 & nchar(cusips) > 0
+    cusips[to.fix] <- sprintf("%09d", as.integer(cusips[to.fix]))
+    return(cusips)
+}
+
+sharkwatch$cusip_9_digit <- fixCUSIPs(sharkwatch$cusip_9_digit)
+
 # Put data into PostgreSQL
 library(RPostgreSQL)
-drv <- dbDriver("PostgreSQL")
-pg <- dbConnect(drv, dbname="crsp")
+pg <- dbConnect(PostgreSQL())
 
 rs <- dbGetQuery(pg, paste("DELETE FROM factset.", tablename, sep=""))
 
