@@ -12,6 +12,7 @@ filename = "sharkwatch_2014-09-15.xls"
 tables = readHTMLTable(file.path("~/Dropbox/data/factset", filename),
                        header=TRUE, stringsAsFactors=FALSE)
 sharkwatch=tables[[1]]
+rm(tables)
 sharkwatch <- sharkwatch[, !duplicated(names(sharkwatch))]
 
 # Fix variable names
@@ -60,7 +61,8 @@ for (i in 1:(dim(sharkwatch)[2])) {
 # Convert dates
 for (i in grep("date", names(sharkwatch), value=TRUE)) {
     cat(i, "\n")
-    sharkwatch[sharkwatch[,i]=="",i] <- NA
+    to.clear <- !is.na(sharkwatch[,i]) & sharkwatch[,i]==""
+    sharkwatch[to.clear, i] <- NA
     sharkwatch[, i] <- as.Date(sharkwatch[, i])
 }
 
@@ -76,7 +78,6 @@ sharkwatch$holder_type <-
 sharkwatch$sharkwatch50 <-
     trim(gsub("^.*SharkWatch50\\?: (.*?) Holder Type: .*$", "\\1",
               sharkwatch$dissident_group_with_sharkwatch50_and_holder_type))
-
 
 fixCUSIPs <- function(cusips) {
     to.fix <- nchar(cusips) < 9 & nchar(cusips) > 0
@@ -105,4 +106,4 @@ sql <- paste("COMMENT ON TABLE factset.", tablename, " IS
 rs <- dbGetQuery(pg, sql)
 rs <- dbDisconnect(pg)
 
-tables <- sharkwatch <- NULL
+sharkwatch <- NULL
