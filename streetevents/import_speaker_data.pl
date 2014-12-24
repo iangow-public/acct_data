@@ -37,8 +37,7 @@ $sql = "
   speaker_number integer,
 	context text,
 	speaker_text text,
-  language text
-) TABLESPACE hdd;
+  language text) ;
 ";
 
 # Run SQL to create the table
@@ -101,15 +100,16 @@ sub analyse_text {
     # Output results num_sentences
     $sql = "INSERT INTO streetevents.speaker_test VALUES ('$basename', '$name', '$employer', ";
     $sql .= "'$role',$number, '$context', '$the_text', '$language')";
+    print "$sql\n";
     $dbh->do($sql);
   }
 }
 
-for ($i = 0; $i <= 9; $i++) {
+for ($i = 4; $i <= 4; $i++) {
   # Get a list of files to parse
   $call_directory = "/Volumes/2TB/data/streetevents2013/";
-  $file_list = $call_directory . "dir_" . $i . "/*.xml";
-  # print "$file_list\n";
+  $file_list = $call_directory . "dir_" . $i . "/1024064_T.xml";
+  print "$file_list\n";
   @file_list = <"$file_list">;
   # @file_list = @file_list[0..10];
 
@@ -145,11 +145,12 @@ for ($i = 0; $i <= 9; $i++) {
       # Look for  the word "Presentation" between a row of ===s a row of ---s and 
       # then text followed by a row of ===s. Capture the latter text.  
       if ($lines =~ /={3,}\n(?:Presentation|Transcript)\n-{3,}(.*?)(?:={3,})/s) {
+        print "$pres";
         $pres = $1;
       }
       
       # Skip file if language isn't English 
-      $language = langof($pres); # gives the most probable language
+      if (defined $pres) { $language = langof($pres); } # gives the most probable language
       # if ($language ne "en") { next; }
 
       $context = "pres";
@@ -173,9 +174,7 @@ for ($i = 0; $i <= 9; $i++) {
 $sql = "
   SET maintenance_work_mem='10GB';
   CREATE INDEX ON streetevents.speaker_test (file_name);
-  -- UPDATE streetevents.speakers SET employer=trim(employer);
-
-  GRANT ALL ON streetevents.speaker_test TO aaz";
+  -- UPDATE streetevents.speakers SET employer=trim(employer);";
 $dbh->do($sql);
 
 $dbh->disconnect();

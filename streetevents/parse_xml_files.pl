@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 ## TODO(igow): I need to fix "HTML entities" (e.g., &amp;) before putting the data
 ##             into my database

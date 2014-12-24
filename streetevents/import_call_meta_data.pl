@@ -28,7 +28,7 @@ $dbh->do($sql);
 # Use PostgreSQL's COPY function to get data into the database
 $time = localtime; 
 $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
-$filename = "call_meta_data.txt.gz";
+$filename = "/Volumes/2TB/data/streetevents2013/call_meta_data.txt.gz";
 printf "Beginning import of $filename at $now_string\n";  
 
 # Note that some of the ISS files have empty lines at the end. This stops
@@ -36,7 +36,7 @@ printf "Beginning import of $filename at $now_string\n";
 # these as empty lines. So, I simply insert \. into any last line that doesn't
 # begin with a number. This \. is an EOF flag for COPY. 
 $cmd  = "gunzip -c \"$filename\" | sed 's/\\\"//g'  ";
-$cmd .=  "| /usr/local/pgsql/bin/psql -U igow ";
+$cmd .=  "| psql -U igow ";
 $cmd .= "-d $dbname -c \"COPY streetevents.calls FROM STDIN CSV HEADER ";
 $cmd .= "DELIMITER '\t' \";";
 print "$cmd\n";
