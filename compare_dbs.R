@@ -15,11 +15,10 @@ getTables <- function(schema) {
     
     library(RPostgreSQL)
     pg <- dbConnect(PostgreSQL(), host="iangow.me")
-    
     pg_iangow_me <- dbGetQuery(pg, sql)
     dbDisconnect(pg)
-    pg <- dbConnect(PostgreSQL(), host="localhost")
     
+    pg <- dbConnect(PostgreSQL(), host="localhost")
     pg_hack <- dbGetQuery(pg, sql)
     dbDisconnect(pg)
     
@@ -28,6 +27,6 @@ getTables <- function(schema) {
     return(merged)
 }
 
-temp <- getTables("issvoting")
+temp <- getTables("targeted")
 subset(temp, desc_mp!=desc_local | is.na(desc_mp) |  is.na(desc_local))
 temp
