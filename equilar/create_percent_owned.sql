@@ -1,21 +1,17 @@
-﻿DROP TABLE IF EXISTS director.percent_owned;
+DROP TABLE IF EXISTS director.percent_owned;
 
 CREATE TABLE director.percent_owned AS 
 
 WITH stanford AS (
   SELECT equilar_id(company_id), fy_end, director_name, percent_shares_owned,
-    last_name, first_name
+    (director.parse_name(director_name)).*
   FROM board.director AS a
-  INNER JOIN board.director_names AS b
-  ON a.director_name=b.original_name
   WHERE percent_shares_owned IS NOT NULL),
 	
 hbs AS (
-  SELECT equilar_id(director_id), fy_end, director_id(director_id) AS director_id, a.director,
-    last_name, first_name
-  FROM director.director AS a
-  INNER JOIN director.director_names AS b
-  ON a.director=b.original_name),
+  SELECT equilar_id(director_id), fy_end, director_id(director_id) AS director_id, director,
+    (director.parse_name(director)).*
+  FROM director.director),
 	
 common_firm_years AS (
   SELECT DISTINCT equilar_id, fy_end
