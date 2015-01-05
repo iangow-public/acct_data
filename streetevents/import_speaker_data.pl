@@ -13,12 +13,13 @@ use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use Lingua::Identify qw(:language_identification);
 use utf8; # does not enable Unicode output - it enables you to type Unicode in your program.
 use File::Basename;
-use HTML::Entities;use Time::localtime;
+use HTML::Entities;
+use Time::localtime;
 use Env qw($PGDATABASE);
 
 $gz_file = @ARGV[0];
 
-# Add this to the program, before your print() statement:
+# Add this to the program, before your print() statement
 binmode(STDOUT, ":utf8");
 
 # Connect to my database
@@ -47,6 +48,9 @@ sub analyse_text {
     $speaker =~ s/^\s+//g;
     $speaker =~ s/\t+//g;
     
+    # Remove new line characters, multiple spaces, and leading spaces
+    # Escape single-quotes for insertion using SQL
+    # (for example, "O'Donnell" becomes "O''Donnell"    
     $the_text =~ s/\n/ /g;
     $the_text =~ s/^\s+//g;
     $the_text =~ s/\s{2,}/ /g;
@@ -55,25 +59,36 @@ sub analyse_text {
     if ($the_text =~ /\?$/) { 
       $context = "qa";
     }
-     
+
+    
+    # First, pull out {name, employer, role} and number
+    # (number will be digits in square brackets)
     $speaker =~ /^(.*)\s+\[(\d+)\]\s+$/;
     $full_name = $1;
     $number = $2;
+    
+    # Now parse {name, employer, role} into components
     $full_name =~ /^([^,]*),\s*(.*)\s+-\s+(.*)$/;
     $name = $1;
     $employer = $2;
     $role = $3;
 
+    # Escape single-quotes for insertion using SQL
+    # (for example, "O'Donnell" becomes "O''Donnell"
     $role =~ s/'/''/g;
 
+     # Remove leading spaces, multiple spaces and
+    # escape single quates
     $employer =~ s/^\s+//g;
     $employer =~ s/\s+$//g;
     $employer =~ s/'/''/g;
    
     if ($number eq '') {
       $number="NULL";
-    } #=~ s/^$/NULL/;
-     
+    }
+    
+    # Remove leading spaces, multiple spaces and
+    # escape single quates 
     $name =~ s/'/''/g;
     $name =~ s/^\s+//g;
     $name =~ s/\s+$//g;

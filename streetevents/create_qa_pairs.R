@@ -19,7 +19,7 @@ dbGetQuery(pg, "
                
     CREATE INDEX ON streetevents.qa_pairs (file_name);
     
-    GRANT SELECT ON  streetevents.qa_pairs TO personality_access;")
+    GRANT SELECT ON streetevents.qa_pairs TO personality_access;")
 
 file_list <- dbGetQuery(pg, "
     SELECT DISTINCT file_name
