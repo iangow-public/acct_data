@@ -1,7 +1,6 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 use DBI;
 use POSIX qw(strftime);
-
 
 # Connect to my database
 $dbname = "crsp";
@@ -35,7 +34,7 @@ printf "Beginning import of $filename at $now_string\n";
 # PostgreSQL's COPY command dead. For some reason, I can't get sed to detect
 # these as empty lines. So, I simply insert \. into any last line that doesn't
 # begin with a number. This \. is an EOF flag for COPY. 
-$cmd  = "gunzip -c \"$filename\" | sed 's/\\\"//g'  ";
+$cmd  = "./parse_xml_files.pl | sed 's/\\\"//g'  ";
 $cmd .=  "| psql -U igow ";
 $cmd .= "-d $dbname -c \"COPY streetevents.calls FROM STDIN CSV HEADER ";
 $cmd .= "DELIMITER '\t' \";";

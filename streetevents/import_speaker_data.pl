@@ -3,7 +3,7 @@
 # Script to import StreetEvents conference call data into my
 # PostgreSQL database
 # Author: Ian Gow
-# Last modified: 2013-06-25
+# Last modified: 2015-01-04
 
 # use various modules module
 use DBI;
@@ -13,7 +13,10 @@ use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use Lingua::Identify qw(:language_identification);
 use utf8; # does not enable Unicode output - it enables you to type Unicode in your program.
 use File::Basename;
-use HTML::Entities;
+use HTML::Entities;use Time::localtime;
+use Env qw($PGDATABASE);
+
+$gz_file = @ARGV[0];
 
 # Add this to the program, before your print() statement:
 binmode(STDOUT, ":utf8");
@@ -22,23 +25,6 @@ binmode(STDOUT, ":utf8");
 $dbname = "crsp";
 my $dbh = DBI->connect("dbi:Pg:dbname=$dbname", 'igow')	
 	or die "Cannot connect: " . $DBI::errstr;
-
-# Create the table to store the data.
-$sql = "
-  -- CREATE SCHEMA streetevents;
-
-  DROP TABLE IF EXISTS streetevents.speaker_test;
-  CREATE TABLE streetevents.speaker_test
-(
-  file_name text,
-  speaker_name text,
-  employer text,
-  role text, 
-  speaker_number integer,
-	context text,
-	speaker_text text,
-  language text) ;
-";
 
 # Run SQL to create the table
 $dbh->do($sql);
@@ -96,87 +82,64 @@ sub analyse_text {
       $employer= "";
       $role ="";
     }
-    
+    print("$sql\n");
+     
     # Output results num_sentences
-    $sql = "INSERT INTO streetevents.speaker_test VALUES ('$basename', '$name', '$employer', ";
+    $sql = "INSERT INTO streetevents.speaker_data VALUES ('$basename', '$name', '$employer', ";
     $sql .= "'$role',$number, '$context', '$the_text', '$language')";
-    print "$sql\n";
     $dbh->do($sql);
   }
 }
 
-for ($i = 4; $i <= 4; $i++) {
-  # Get a list of files to parse
-  $call_directory = "/Volumes/2TB/data/streetevents2013/";
-  $file_list = $call_directory . "dir_" . $i . "/1024064_T.xml";
-  print "$file_list\n";
-  @file_list = <"$file_list">;
-  # @file_list = @file_list[0..10];
+# Get a list of files to parse
 
-  foreach $gz_file (@file_list) {
-    $basename = basename($gz_file,@suffixlist);
-    $basename =~ s/\.xml(\.gz)?$//g;
-    # $basename =~ s/\.xml$//g;
-    open($fh, "<", $gz_file) or die;
-   
-    # initialize the parser
-    my $parser = new XML::LibXML;
-    
-    # open a filehandle and parse
-    # my $doc = $parser->parse_string( $temp );
-    my $doc = $parser->parse_fh( $fh );
-    close $fh;
-    foreach my $event ($doc->findnodes('/Event')) {
-      my $type = $event->findvalue('./@eventTypeId');
-      
-      # if ($type ne '1') {
-      #  next;
-      # }
-    
-      my $ticker = $event->findnodes('./companyTicker');
-      my $lines = decode_entities($event->findnodes('./EventStory/Body'));
-      
-      # Skip calls without tickers
-      if (!defined $ticker or $ticker =~ /^\s*$/) { next; } 
-      
-      $lines =~ s/\r\n/\n/g;
-      
-      # access XML data
-      # Look for  the word "Presentation" between a row of ===s a row of ---s and 
-      # then text followed by a row of ===s. Capture the latter text.  
-      if ($lines =~ /={3,}\n(?:Presentation|Transcript)\n-{3,}(.*?)(?:={3,})/s) {
-        print "$pres";
-        $pres = $1;
-      }
-      
-      # Skip file if language isn't English 
-      if (defined $pres) { $language = langof($pres); } # gives the most probable language
-      # if ($language ne "en") { next; }
+$basename = basename($gz_file,@suffixlist);
+$basename =~ s/\.xml(\.gz)?$//g;
+open($fh, "<", $gz_file) or die;
 
-      $context = "pres";
-      analyse_text($pres);
+# initialize the parser
+my $parser = new XML::LibXML;
 
-      # Now do the same thing for Q&A as was done for the presentation
-      if ($lines =~ /={3,}\nQuestions and Answers\n-{3,}(.*)$/s) {
-        $qa = $1;
-      }
+# open a filehandle and parse
+my $doc = $parser->parse_fh( $fh );
+close $fh;
+foreach my $event ($doc->findnodes('/Event')) {
+  my $type = $event->findvalue('./@eventTypeId');
+  
+  # if ($type ne '1') {
+  #  next;
+  # }
 
-      $context = "qa";
-      analyse_text($qa);
-    }
+  my $ticker = $event->findnodes('./companyTicker');
+  my $lines = decode_entities($event->findnodes('./EventStory/Body'));
+  
+  # Skip calls without tickers
+  if (!defined $ticker or $ticker =~ /^\s*$/) { next; } 
+  
+  $lines =~ s/\r\n/\n/g;
+  
+  # access XML data
+  # Look for  the word "Presentation" between a row of ===s a row of ---s and 
+  # then text followed by a row of ===s. Capture the latter text.  
+  if ($lines =~ /={3,}\n(?:Presentation|Transcript)\n-{3,}(.*?)(?:={3,}|$)/s) {
+    $pres = $1;
   }
+  
+  # Skip file if language isn't English 
+  if (defined $pres) { $language = langof($pres); } # gives the most probable language
+  # if ($language ne "en") { next; }
+
+  $context = "pres";
+  analyse_text($pres);
+
+  # Now do the same thing for Q&A as was done for the presentation
+  if ($lines =~ /={3,}\nQuestions and Answers\n-{3,}(.*)$/s) {
+    $qa = $1;
+  }
+
+  $context = "qa";
+  analyse_text($qa);
 }
 
-# Fix permissions and set up indexes
-#$sql = "ALTER TABLE issvoting.npx OWNER TO activism";
-# $dbh->do($sql);
-
-$sql = "
-  SET maintenance_work_mem='10GB';
-  CREATE INDEX ON streetevents.speaker_test (file_name);
-  -- UPDATE streetevents.speakers SET employer=trim(employer);";
-$dbh->do($sql);
-
 $dbh->disconnect();
-# Open each file and extract the contents into a string $lines
 
