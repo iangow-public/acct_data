@@ -2,24 +2,26 @@ library("RPostgreSQL")
 
 pg <- dbConnect(PostgreSQL())
 
-dbGetQuery(pg, "
-    DROP TABLE IF EXISTS streetevents.qa_pairs;
-
-    CREATE TABLE streetevents.qa_pairs
-    (
-      file_name text,
-      questioner text,
-      questions text[],
-      question_nums integer[],
-      answerers text[],
-      answer_nums integer[],
-      answers text[],
-      answerer_roles text[]
-    );
-               
-    CREATE INDEX ON streetevents.qa_pairs (file_name);
+if (!dbExistsTable(pg, c("streetevents", "qa_pairs"))) {
+    dbGetQuery(pg, "
+        DROP TABLE IF EXISTS streetevents.qa_pairs;
     
-    GRANT SELECT ON streetevents.qa_pairs TO personality_access;")
+        CREATE TABLE streetevents.qa_pairs
+        (
+          file_name text,
+          questioner text,
+          questions text[],
+          question_nums integer[],
+          answerers text[],
+          answer_nums integer[],
+          answers text[],
+          answerer_roles text[]
+        );
+                   
+        CREATE INDEX ON streetevents.qa_pairs (file_name);
+        
+        GRANT SELECT ON streetevents.qa_pairs TO personality_access;")
+}
 
 file_list <- dbGetQuery(pg, "
     SELECT DISTINCT file_name

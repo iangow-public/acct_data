@@ -3,7 +3,7 @@
 # Script to import StreetEvents conference call data into my
 # PostgreSQL database
 # Author: Ian Gow
-# Last modified: 2015-01-04
+# Last modified: 2015-01-21
 
 # use various modules module
 use DBI;
@@ -59,7 +59,6 @@ sub analyse_text {
     if ($the_text =~ /\?$/) { 
       $context = "qa";
     }
-
     
     # First, pull out {name, employer, role} and number
     # (number will be digits in square brackets)
@@ -100,8 +99,11 @@ sub analyse_text {
     print("$sql\n");
      
     # Output results num_sentences
-    $sql = "INSERT INTO streetevents.speaker_data VALUES ('$basename', '$name', '$employer', ";
-    $sql .= "'$role',$number, '$context', '$the_text', '$language')";
+    $sql = "INSERT INTO streetevents.speaker_data ";
+    $sql .= "( file_name, last_update, speaker_name, employer, role, ";
+    $sql .= "speaker_number, context, speaker_text, language) ";
+    $sql .= "VALUES ('$basename', '$_[1]', '$name', '$employer', ";
+    $sql .= "'$role', $number, '$context', '$the_text', '$language')";
     $dbh->do($sql);
   }
 }
@@ -121,11 +123,8 @@ close $fh;
 foreach my $event ($doc->findnodes('/Event')) {
   my $type = $event->findvalue('./@eventTypeId');
   
-  # if ($type ne '1') {
-  #  next;
-  # }
-
   my $ticker = $event->findnodes('./companyTicker');
+  my $last_update = $event->findvalue('./@lastUpdate');  
   my $lines = decode_entities($event->findnodes('./EventStory/Body'));
   
   # Skip calls without tickers
@@ -137,23 +136,23 @@ foreach my $event ($doc->findnodes('/Event')) {
   # Look for  the word "Presentation" between a row of ===s a row of ---s and 
   # then text followed by a row of ===s. Capture the latter text.  
   if ($lines =~ /={3,}\n(?:Presentation|Transcript)\n-{3,}(.*?)(?:={3,}|$)/s) {
+    print "Hi!";
     $pres = $1;
   }
   
-  # Skip file if language isn't English 
   if (defined $pres) { $language = langof($pres); } # gives the most probable language
-  # if ($language ne "en") { next; }
 
   $context = "pres";
-  analyse_text($pres);
+  analyse_text($pres, $last_update);
 
   # Now do the same thing for Q&A as was done for the presentation
   if ($lines =~ /={3,}\nQuestions and Answers\n-{3,}(.*)$/s) {
+    print "Hi again!";
     $qa = $1;
   }
 
   $context = "qa";
-  analyse_text($qa);
+  analyse_text($qa, $last_update);
 }
 
 $dbh->disconnect();

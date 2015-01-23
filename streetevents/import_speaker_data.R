@@ -1,28 +1,68 @@
+#!/usr/bin/env Rscript
+
+# Get a list of files that need to be processed ----
+
 library("RPostgreSQL")
 pg <- dbConnect(PostgreSQL())
 
+if (!dbExistsTable(pg, c("streetevents", "speaker_data"))) {
+    dbGetQuery(pg, "
+        CREATE TABLE streetevents.speaker_data
+            (
+              file_name text,
+              last_update timestamp without time zone,
+              speaker_name text,
+              employer text,
+              role text,
+              speaker_number integer,
+              context text,
+              speaker_text text,
+              language text
+            );
+        
+        SET maintenance_work_mem='3GB';
+
+        CREATE INDEX ON streetevents.speaker_data (file_name, last_update);
+        CREATE INDEX ON streetevents.speaker_data (file_name);")
+}
+
+# Note that this assumes that streetevents.calls is up to date.
 file_list <- dbGetQuery(pg, "
     SET work_mem='2GB';
 
-    SELECT file_name, call_type, call_desc
-    FROM streetevents.calls 
-    WHERE file_name NOT IN (SELECT file_name FROM streetevents.speaker_data)")
+    WITH 
+    
+    latest_mtime AS (
+        SELECT a.file_name, last_update,
+            max(DISTINCT mtime) AS mtime
+        FROM streetevents.calls_test AS a
+        INNER JOIN streetevents.call_files
+        USING (file_path)
+        GROUP BY a.file_name, last_update),
+    
+    calls AS (
+        SELECT file_path, file_name, last_update
+        FROM streetevents.calls_test
+        INNER JOIN latest_mtime
+        USING (file_name, last_update)) 
+    
+    SELECT file_path
+    FROM calls
+    WHERE (file_name, last_update) NOT IN
+        (SELECT file_name, last_update FROM streetevents.speaker_data)")
 
 rs <- dbDisconnect(pg)
-parseFile <- function(file_name) {
-    se.dir <- "/Volumes/2TB/data/streetevents2013"
 
-    # Find last digit before underscore
-    m <- regexpr("[0-9](?=_T)", file_name, perl=TRUE)
-    last_digit <- regmatches(file_name, m)
-    file_path <- file.path(se.dir, paste("dir", last_digit, sep="_"), 
-                           paste0(file_name, ".xml"))
+# Create function to parse a StreetEvents XML file ----
+parseFile <- function(file_path) {
     
+    # Parse the indicated file using a Perl script
     system(paste("streetevents/import_speaker_data.pl", file_path),
            intern = TRUE)
 }
 
+# Apply parsing function to files ----
 library(parallel)
 system.time({
-    res <- unlist(mclapply(file_list$file_name, parseFile, mc.cores=12))
+    res <- unlist(mclapply(file_list$file_path, parseFile, mc.cores=12))
 })
