@@ -22,7 +22,7 @@ cusip_cik AS (
     FROM filings.cusip_cik 
     WHERE char_length(trim(cusip))>=8
     GROUP BY substr(cusip, 1, 8), cik 
-    HAVING count(*) > 5
+    HAVING count(*) > 10
     UNION 
     SELECT DISTINCT substr(cusip, 1, 8) AS cusip, cik::integer
     FROM ciq.wrds_cusip
