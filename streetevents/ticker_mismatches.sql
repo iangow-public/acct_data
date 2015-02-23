@@ -21,13 +21,33 @@ $$
     return $temp;
 $$ LANGUAGE plperl;
 
+CREATE OR REPLACE FUNCTION streetevents.extract_name (text) 
+RETURNS text AS 
+$$
+    my $temp = $_[0];
+    
+    # The vast majority of cases fit this format
+    if ($temp =~ /^Q[1-4] \d{4} (.*) Earnings.*Conference Call$/) {
+        $temp = $1;
+    }
+
+    if ($temp =~ /^.+ Q[1-4] \d{4} Earnings.*Conference Call$/) {
+        $temp = $1;
+    }
+
+    $regex = '^(?:First|Second|Third|Fourth) Quarter (?:FY)?\d{4} (.*) ';
+    $regex += 'Earnings.*Conference Call$';
+    if ($temp =~ /$regex/) {
+        $temp = $1;
+    }
+
+    return $temp;
+$$ LANGUAGE plperl;
 
 WITH 
 raw_data AS (
     SELECT file_name, ticker, co_name, call_desc, 
-        regexp_replace(call_desc,
-                       '^Q[1-4] \d{4} (.*) Earnings Conference Call$',
-                       '\1') AS original_name,
+        streetevents.extract_name(call_desc) AS original_name,
         call_desc ~ '^Q[1-4] \d{4} .* Earnings Conference Call$' AS call_desc_std
     FROM streetevents.calls
     WHERE call_type=1 AND ticker !~ '\.' -- Exclude foreign firms
