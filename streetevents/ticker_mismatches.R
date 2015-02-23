@@ -1,6 +1,7 @@
 # Function that uses agrep() to determine matches
 # I believe agrep() uses Levenshtein distance
 amatch <- function(str1, str2) {
+    if (is.na(str1) | is.na(str2)) return(NA)
     if (str1=="" | str2 =="") return(NA)
     agrepl(str1, str2) | agrepl(str2, str1)
 }

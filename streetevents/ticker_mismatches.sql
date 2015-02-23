@@ -24,20 +24,21 @@ $$ LANGUAGE plperl;
 CREATE OR REPLACE FUNCTION streetevents.extract_name (text) 
 RETURNS text AS 
 $$
-    my $temp = $_[0];
+    my $call_desc = $_[0];
+    my $temp;
     
     # The vast majority of cases fit this format
-    if ($temp =~ /^Q[1-4] \d{4} (.*) Earnings.*Conference Call$/) {
+    if ($call_desc =~ /^Q[1-4] \d{4} (.*) Earnings.*Conference Call$/) {
         $temp = $1;
     }
 
-    if ($temp =~ /^.+ Q[1-4] \d{4} Earnings.*Conference Call$/) {
+    if ($call_desc =~ /^.+ Q[1-4] \d{4} Earnings.*Conference Call$/) {
         $temp = $1;
     }
 
     $regex = '^(?:First|Second|Third|Fourth) Quarter (?:FY)?\d{4} (.*) ';
     $regex += 'Earnings.*Conference Call$';
-    if ($temp =~ /$regex/) {
+    if ($call_desc =~ /$regex/) {
         $temp = $1;
     }
 
