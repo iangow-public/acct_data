@@ -24,7 +24,8 @@ $$ LANGUAGE plperl;
 CREATE OR REPLACE FUNCTION streetevents.extract_name (text) 
 RETURNS text AS 
 $$
-    $call_desc = $_[0];
+    my $call_desc = $_[0];
+    my $temp;
     
     # The vast majority of cases fit this format
     if ($call_desc =~ /^Q[1-4] \d{4} (.*) Earnings.*Conference Call$/) {
