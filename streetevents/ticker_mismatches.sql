@@ -40,6 +40,14 @@ clean_names AS (
         streetevents.fix_name(original_name) AS original_name
     FROM raw_data)
     
-SELECT *,
-    NOT (co_name ~* original_name OR original_name ~* co_name) AS diff_name
-FROM clean_names;
+SELECT a.*, c.call_date, b.match_type, b.match_type_desc, 
+    d.comnam, d.permno, 
+    NOT (a.co_name ~* original_name OR original_name ~* a.co_name) AS diff_name
+FROM clean_names AS a
+INNER JOIN streetevents.calls AS c
+USING (file_name)
+LEFT JOIN streetevents.crsp_link AS b
+USING (file_name)
+LEFT JOIN crsp.stocknames AS d
+ON b.permno = d.permno 
+    AND c.call_date BETWEEN d.namedt AND d.nameenddt;
