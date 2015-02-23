@@ -6,7 +6,7 @@ amatch <- function(str1, str2) {
     agrepl(str1, str2) | agrepl(str2, str1)
 }
 
-# Get data from PostgreSQL
+# Get data from PostgreSQL ----
 library("RPostgreSQL")
 pg <- dbConnect(PostgreSQL())
 sql <- paste(readLines("streetevents/ticker_mismatches.sql"),
