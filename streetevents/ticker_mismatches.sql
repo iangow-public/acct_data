@@ -3,7 +3,7 @@ SET work_mem='1GB';
 CREATE OR REPLACE FUNCTION streetevents.fix_name (text) 
 RETURNS text AS 
 $$
-    $temp = $_[0];
+    my $temp = $_[0];
     
     # Abbreviate where possible
     $temp =~ s/Corporation/Corp/;
@@ -50,7 +50,7 @@ WITH
 raw_data AS (
     SELECT file_name, ticker, co_name, call_desc, 
         streetevents.extract_name(call_desc) AS original_name,
-        call_desc ~ '^Q[1-4] \d{4} .* Earnings Conference Call$' AS call_desc_std
+        call_desc ~ '^Q[1-4] \d{4} .* Earnings.*Conference Call$' AS call_desc_std
     FROM streetevents.calls
     WHERE call_type=1 AND ticker !~ '\.' -- Exclude foreign firms
     ),
