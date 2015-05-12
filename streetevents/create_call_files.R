@@ -4,6 +4,7 @@
 # and post to PostgreSQL.
 
 library("RPostgreSQL")
+library("parallel")
 
 getSHA1 <- function(file_name) {
     library("digest")
@@ -19,6 +20,7 @@ file_path <- list.files(streetevent.dir,
 file_info <- file.info(file_path)
 file.list <- data.frame(file_path, stringsAsFactors=FALSE)
 
+file.list$file_size <- file_info$size
 file.list$mtime <- file_info$mtime
 file.list$ctime <- file_info$ctime
 file.list$file_name <- gsub("\\.xml", "", basename(file.list$file_path))
