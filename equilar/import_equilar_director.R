@@ -74,8 +74,7 @@ co_fin$cusip[grepl("^X+$", co_fin$cusip)] <- NA
 # Save the files to a PostgreSQL database
 # load(paste(equilar.path,"board.Rdata",sep=""))
 library(RPostgreSQL)
-drv <- dbDriver("PostgreSQL")
-pg <- dbConnect(drv, dbname = "crsp")
+pg <- dbConnect(PostgreSQL())
 
 # rs <- dbGetQuery(pg, "CREATE SCHEMA director")
 rs <- dbWriteTable(pg, c("director","director"), director, row.names=FALSE, overwrite=TRUE)
@@ -83,7 +82,7 @@ rs <- dbWriteTable(pg, c("director","co_fin"), co_fin, row.names=FALSE, overwrit
 
 # E. Floyd Kvamme has been a director of the Company since March 1995.
 # Ernest von Simson has been a director of Brio since August 2000.
-# Franklin J. Lunding, Jr…………….Age 55  1972
+# Franklin J. Lunding, Jr. Age 55  1972
 # Mr. Deng has also been a member of our board of directors since September 1999.
 # Thomas F. Mendoza has served as a member of our board of directors since June 1999.
 # Victor E. Parker, Jr. has served as a member of our board of directors since July 2000.
@@ -200,6 +199,11 @@ matched <- dbGetQuery(pg,"
     ALTER TABLE director.percent_owned OWNER TO activism;
 ")
 
+sql <- paste(readLines("equilar/create_indexes.sql"), collapse="\n")
+rs <- dbGetQuery(pg, sql)
+sql <- paste(readLines("equilar/create_equilar_proxies.sql"), collapse="\n")
+rs <- dbGetQuery(pg, sql)
+
 rs <- dbDisconnect(pg)
-rs <- dbUnloadDriver(drv)
+rs <- dbUnloadDriver(PostgreSQL())
 # system("~/Dropbox/data/equilar/director/process_director_names.pl")
