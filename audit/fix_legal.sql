@@ -1,18 +1,7 @@
 ALTER TABLE audit.feed14case ADD COLUMN case_start_date date;
-UPDATE audit.feed14case SET case_start_date=case_start_date_x::date;
-ALTER TABLE audit.feed14case DROP COLUMN case_start_date_x;
-
 ALTER TABLE audit.feed14case ADD COLUMN case_end_date date;
-UPDATE audit.feed14case SET case_end_date=case_end_date_x::date;
-ALTER TABLE audit.feed14case DROP COLUMN case_end_date_x;
-
 ALTER TABLE audit.feed14case ADD COLUMN exp_start_date date;
-UPDATE audit.feed14case SET exp_start_date=exp_start_date_x::date WHERE exp_start_date_s IS NOT NULL;
-ALTER TABLE audit.feed14case DROP COLUMN exp_start_date_x;
-
 ALTER TABLE audit.feed14case ADD COLUMN exp_end_date date;
-UPDATE audit.feed14case SET exp_end_date=exp_end_date_x::date WHERE exp_end_date_s IS NOT NULL;
-ALTER TABLE audit.feed14case DROP COLUMN exp_end_date_x;
 
 ALTER TABLE audit.feed14case ALTER COLUMN legal_case_key TYPE integer;
 ALTER TABLE audit.feed14case ALTER COLUMN law_court_key TYPE integer;
@@ -34,12 +23,6 @@ ALTER TABLE audit.feed14case DROP COLUMN case_start_date_s;
 ALTER TABLE audit.feed14case DROP COLUMN case_end_date_s;
 ALTER TABLE audit.feed14case DROP COLUMN exp_start_date_s;
 ALTER TABLE audit.feed14case DROP COLUMN  exp_end_date_s;
-
-company_fkey text,
-  auditor_key double precision,
-   double precision,
-   double precision,
-   double precision,
 
 ALTER TABLE audit.feed14party ADD COLUMN company_fkey_temp  integer;
 
