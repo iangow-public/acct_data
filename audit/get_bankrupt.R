@@ -1,4 +1,4 @@
-system("perl ./wrds_to_pg_v2 audit.bankrupt")
+system("perl wrds_to_pg_v2 audit.bankrupt")
 
 library(RPostgreSQL)
 pg <- dbConnect(PostgreSQL())
@@ -10,7 +10,6 @@ del.names <- grep("^(match|closest|prior)(qu|fy)", names, value=TRUE)
 for (i in del.names) {
     dbGetQuery(pg, paste0("ALTER TABLE audit.bankrupt DROP COLUMN ", i))
 }
-
 
 dbGetQuery(pg, "
     ALTER TABLE audit.bankrupt ALTER COLUMN bank_key TYPE integer;

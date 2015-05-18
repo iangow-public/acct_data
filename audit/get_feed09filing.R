@@ -92,6 +92,15 @@ convertToBoolean <- function(table, var) {
     dbDisconnect(pg)
 }
 
+convertToDouble <- function(table, var) {
+    library("RPostgreSQL")
+    pg <- dbConnect(PostgreSQL())
+    sql <- paste0("ALTER TABLE ", table, " ALTER COLUMN ",
+                  var, " TYPE float8 USING ", var, "::float8")
+    dbGetQuery(pg, sql)
+    dbDisconnect(pg)
+}
+
 convertToInteger <- function(table, var) {
     library("RPostgreSQL")
     pg <- dbConnect(PostgreSQL())
@@ -123,8 +132,12 @@ dbDisconnect(pg)
 
 system('perl ./wrds_to_pg_v2 audit.feed09cat')
 system('perl ./wrds_to_pg_v2 audit.feed09tocat')
+system('perl ./wrds_to_pg_v2 audit.feed09period')
 
 convertToInteger("audit.feed09cat", "res_category_fkey")
 convertToInteger("audit.feed09tocat", "res_notify_key")
 convertToInteger("audit.feed09tocat", "res_category_fkey")
+convertToInteger("audit.feed09period", "res_notify_key")
+convertToDouble("audit.feed09period", "res_period_aud_fkey")
+convertToInteger("audit.feed09period", "res_period_aud_fkey")
  
