@@ -63,8 +63,6 @@ names(co_fin) <- tolower(names(co_fin))
 names(co_fin) <- gsub("^c34$", "split_data", names(co_fin))
 co_fin$fy_end <- as.Date(co_fin$fy_end)
 
-
-
 co_fin$shares_outstanding_date <- as.Date(co_fin$shares_outstanding_date)
 co_fin$total_shareholder_return_1_yr <- as.numeric(co_fin$total_shareholder_return_1_yr)
 
@@ -134,69 +132,6 @@ rs <- dbGetQuery(pg, "
     SET maintenance_work_mem='1GB';
     CREATE INDEX ON board.director (company_id);
     CREATE INDEX ON board.co_fin (company_id);
-    GRANT USAGE ON SCHEMA director TO activism;
-    GRANT SELECT ON ALL TABLES IN SCHEMA director TO activism;
-")
-
-matched <- dbGetQuery(pg,"
-    
-    DROP TABLE IF EXISTS director.percent_owned;
-    CREATE TABLE director.percent_owned AS
-    WITH stanford AS (
-        SELECT DISTINCT equilar_id(a.company_id), a.fy_end,
-            director_id, director_id(director_id) AS equilar_director_id,
-            director_name, (director.parse_name(director_name)).*,
-            CASE WHEN c.shares_outstanding > 0 
-                THEN a.shares_owned/c.shares_outstanding END AS percent_shares_owned
-        FROM board.director AS a
-        INNER JOIN board.co_fin AS c
-        ON equilar_id(a.company_id)=equilar_id(c.company_id) AND a.fy_end=c.fy_end
-        WHERE shares_owned IS NOT NULL),
-    hbs AS (
-        SELECT DISTINCT equilar_id(director_id), fy_end, 
-            director_id, director_id(director_id) AS equilar_director_id, 
-            director, (director.parse_name(director)).*
-        FROM director.director),
-    common_firm_years AS (
-        SELECT DISTINCT equilar_id, fy_end
-        FROM hbs AS a
-        INNER JOIN stanford AS b
-        USING (equilar_id, fy_end)),
-    name_matches AS (
-        SELECT DISTINCT
-            a.equilar_id,
-            a.fy_end,
-            a.director_id,
-            a.director,
-            COALESCE(b.director_name, c.director_name, d.director_name, 
-                     e.director_name, f.director_name) AS director_name,
-            COALESCE(b.percent_shares_owned, c.percent_shares_owned, d.percent_shares_owned, 
-                      e.percent_shares_owned, f.percent_shares_owned) AS percent_shares_owned,
-            COALESCE(b.equilar_id, c.equilar_id, d.equilar_id, 
-                      e.equilar_id, f.equilar_id) IS NOT NULL AS on_stanford
-        FROM hbs AS a
-        LEFT JOIN stanford AS b
-        ON a.equilar_id=b.equilar_id AND a.fy_end=b.fy_end AND
-            lower(a.director)=lower(b.director_name)
-        LEFT JOIN stanford AS c
-        ON a.equilar_id=c.equilar_id AND a.fy_end=c.fy_end AND
-            lower(a.last_name)=lower(c.last_name) AND lower(a.first_name)=lower(c.first_name)
-        LEFT JOIN stanford AS d
-        ON a.equilar_id=d.equilar_id AND a.fy_end=d.fy_end AND
-            lower(a.last_name)=lower(d.last_name) AND substr(a.first_name,1,2) ilike substr(d.first_name,1,2)
-        LEFT JOIN stanford AS e
-        ON a.equilar_id=e.equilar_id AND a.fy_end=e.fy_end AND
-            lower(a.last_name)=lower(e.last_name) AND substr(a.first_name,1,1) ILIKE substr(e.first_name,1,1)
-        LEFT JOIN stanford AS f
-        ON a.equilar_id=f.equilar_id AND a.fy_end=f.fy_end AND
-            lower(a.last_name)=lower(f.last_name))
-    SELECT DISTINCT *
-    FROM common_firm_years
-    INNER JOIN name_matches
-    USING (equilar_id, fy_end)
-    ORDER BY equilar_id, fy_end, director;
-    
-    ALTER TABLE director.percent_owned OWNER TO activism;
 ")
 
 sql <- paste(readLines("equilar/create_indexes.sql"), collapse="\n")
@@ -206,4 +141,3 @@ rs <- dbGetQuery(pg, sql)
 
 rs <- dbDisconnect(pg)
 rs <- dbUnloadDriver(PostgreSQL())
-# system("~/Dropbox/data/equilar/director/process_director_names.pl")
