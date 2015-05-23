@@ -1,4 +1,4 @@
-﻿-- SELECT CURRENT_DATE + s.a AS dates 
+-- SELECT CURRENT_DATE + s.a AS dates 
 --   FROM generate_series(0,14,7) as s(a);
 -- DROP TABLE IF EXISTS crsp.trading_dates CASCADE;
 DROP TABLE IF EXISTS crsp.trading_dates CASCADE;
@@ -35,3 +35,4 @@ CLUSTER crsp.anncdates USING anncdates_anncdate_idx;
 ANALYZE crsp.anncdates;
 
 SELECT * FROM crsp.anncdates WHERE date IS NULL;
+CREATE INDEX ON crsp.anncdates (anncdate);

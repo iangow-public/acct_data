@@ -20,25 +20,80 @@ $msf = $msf >> 8;
 $msi = $msi >> 8;
 $msedelist = $msedelist >> 8;
 
+if ($msi) {
+    system("psql -c 'CREATE INDEX ON crsp.msi (date)'");
+}
+
 if ($mport | $msf | $msi | $msedelist) {
     system("psql -f crsp/crsp_make_mrets.sql")
 }
 
+if ($msf) {
+    system("psql -c 'CREATE INDEX ON crsp.msf (permno, date);'");
+}
+
 # Update daily data
 $dsf = system("./wrds_to_pg_v2 crsp.dsf --fix-missing");
+# See http://perldoc.perl.org/functions/system.html
+$dsf = $dsf >> 8;
+
+if ($dsf) {
+    system("psql -c 'SET maintenance_work_mem=\"10GB\"; CREATE INDEX ON crsp.dsf (permno, date)'");
+}
+
 $dsi = system("./wrds_to_pg_v2 crsp.dsi");
+$dsi = $dsi >> 8;
+
+if ($dsi) {
+    # system("psql -f crsp/crsp_indexes.sql");
+    system("CREATE INDEX ON crsp.dsi (date)'");
+    system("psql -f crsp/make_trading_dates");
+}
+
 $dsedelist = system("./wrds_to_pg_v2 crsp.dsedelist --fix-missing");
+$dsedelist = $dsedelist >> 8;
+
+if ($dsedelist) {
+    system("psql -c 'CREATE INDEX ON crsp.dsedelist (permno)'");
+}
 
 $dport = system("./wrds_to_pg_v2 crsp.dport1");
-
-# See http://perldoc.perl.org/functions/system.html
 $dport = $dport >> 8;
-$dsf = $dsf >> 8;
-$dsi = $dsi >> 8;
-$dsedelist = $dsedelist >> 8;
-$dport = 1;
+
+if ($dport) {
+    system("psql -f crsp/fix_d_permnos.sql");
+    print "Getting erdport1\n";
+    system("crsp/get_erdport.pl");
+    system("psql -f crsp/crsp_make_erdport1.sql");
+    system("psql -c 'CREATE INDEX ON crsp.dport1 (permno, date)'");
+}
+
+if ($dport | $dsf | $dsi | $dsedelist) {
+    system("psql -f crsp/crsp_make_rets_alt.sql")
+}
+
 
 $ccmxpf_linktable = system("./wrds_to_pg_v2 crsp.ccmxpf_linktable --fix-missing");
+$ccmxpf_linktable = $ccmxpf_linktable >> 8;
+
+if ($ccmxpf_linktable) {
+    system("psql -c 'CREATE INDEX ON crsp.ccmxpf_linktable (lpermno)'");
+    system("psql -c 'CREATE INDEX ON crsp.ccmxpf_linktable (gvkey)");
+}
+
+$ccmxpf_lnkhist = system("./wrds_to_pg_v2 crsp.ccmxpf_lnkhist --fix-missing");
+$ccmxpf_lnkhist = $ccmxpf_lnkhist >> 8;
+
+if ($ccmxpf_lnkhist) {
+    system("psql -c 'CREATE INDEX ON crsp.ccmxpf_lnkhist (gvkey)'");
+}
+
+$dsedist = system("./wrds_to_pg_v2 crsp.dsedist --fix-missing");
+$dsedist = $dsedist >> 8;
+
+if ($dsedist) {
+    system("psql -c 'CREATE INDEX ON crsp.dsedist (permno)'");
+}
 
 $stocknames = system("./wrds_to_pg_v2 crsp.stocknames");
 $stocknames = $stocknames >> 8;
@@ -46,33 +101,20 @@ $stocknames = $stocknames >> 8;
 if ($stocknames) {
     system("psql -c 'ALTER TABLE crsp.stocknames ALTER permno TYPE bigint'");
     system("psql -c 'ALTER TABLE crsp.stocknames ALTER permco TYPE bigint'");
+    system("psql -f crsp/crsp_fix_permnos.sql;");
 }
 
-if ($dport) {
-    system("psql -f crsp/fix_d_permnos.sql");
-    print "Getting erdport1\n";
-    system("crsp/get_erdport.pl");
-    system("psql -f crsp/crsp_make_erdport1.sql");
-}
-
-if ($dsf) {
-    system("psql -f crsp/crsp_indexes.sql");
-
-}
-
-if ($dport | $dsf | $dsi | $dsedelist) {
-    system("psql -f crsp/crsp_make_rets_alt.sql")
+$dseexchdates = system("./wrds_to_pg_v2 crsp.stocknames");
+$dseexchdates = $dseexchdates >> 8;
+if ($dseexchdates) {
+    system("psql -c 'CREATE INDEX ON crsp.dseexchdates (permno)');
 }
 
 # Update other data sets
 system("
-    ./wrds_to_pg_v2 crsp.dseexchdates;
     ./wrds_to_pg_v2 crsp.msp500list;
-    ./wrds_to_pg_v2 crsp.ccmxpf_lnkhist --fix-missing;
     ./wrds_to_pg_v2 crsp.ccmxpf_lnkused --fix-missing;
-    ./wrds_to_pg_v2 crsp.dsedist --fix-missing;
     ./wrds_to_pg_v2 crsp.fund_names --fix-missing;
-    psql -f crsp/crsp_fix_permnos.sql;
     psql -f permissions.sql")
 
 
