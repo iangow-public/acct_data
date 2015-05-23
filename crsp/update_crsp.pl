@@ -36,6 +36,17 @@ $dport = $dport >> 8;
 $dsf = $dsf >> 8;
 $dsi = $dsi >> 8;
 $dsedelist = $dsedelist >> 8;
+$dport = 1;
+
+$ccmxpf_linktable = system("./wrds_to_pg_v2 crsp.ccmxpf_linktable --fix-missing")
+
+$stocknames = system("./wrds_to_pg_v2 crsp.stocknames")
+$stocknames = $stocknames >> 8;
+
+if ($stocknames) {
+    system("psql -c 'ALTER TABLE crsp.stocknames ALTER permno TYPE bigint'");
+    system("psql -c 'ALTER TABLE crsp.stocknames ALTER permco TYPE bigint'");
+}
 
 if ($dport) {
     system("psql -f crsp/fix_d_permnos.sql");
@@ -57,8 +68,6 @@ if ($dport | $dsf | $dsi | $dsedelist) {
 system("
     ./wrds_to_pg_v2 crsp.dseexchdates;
     ./wrds_to_pg_v2 crsp.msp500list;
-    ./wrds_to_pg_v2 crsp.stocknames;
-    ./wrds_to_pg_v2 crsp.ccmxpf_linktable --fix-missing;
     ./wrds_to_pg_v2 crsp.ccmxpf_lnkhist --fix-missing;
     ./wrds_to_pg_v2 crsp.ccmxpf_lnkused --fix-missing;
     ./wrds_to_pg_v2 crsp.dsedist --fix-missing;
