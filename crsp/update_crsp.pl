@@ -38,9 +38,9 @@ $dsi = $dsi >> 8;
 $dsedelist = $dsedelist >> 8;
 $dport = 1;
 
-$ccmxpf_linktable = system("./wrds_to_pg_v2 crsp.ccmxpf_linktable --fix-missing")
+$ccmxpf_linktable = system("./wrds_to_pg_v2 crsp.ccmxpf_linktable --fix-missing");
 
-$stocknames = system("./wrds_to_pg_v2 crsp.stocknames")
+$stocknames = system("./wrds_to_pg_v2 crsp.stocknames");
 $stocknames = $stocknames >> 8;
 
 if ($stocknames) {
