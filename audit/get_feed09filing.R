@@ -83,33 +83,7 @@ cmd = paste0("echo \"", sas_code, "\" | ",
 
 system(cmd)
 
-convertToBoolean <- function(table, var) {
-    library("RPostgreSQL")
-    pg <- dbConnect(PostgreSQL())
-    sql <- paste0("ALTER TABLE ", table," ALTER COLUMN ",
-              var, " TYPE boolean USING ", var, "=1")
-    dbGetQuery(pg, sql)
-    dbDisconnect(pg)
-}
-
-convertToDouble <- function(table, var) {
-    library("RPostgreSQL")
-    pg <- dbConnect(PostgreSQL())
-    sql <- paste0("ALTER TABLE ", table, " ALTER COLUMN ",
-                  var, " TYPE float8 USING ", var, "::float8")
-    dbGetQuery(pg, sql)
-    dbDisconnect(pg)
-}
-
-convertToInteger <- function(table, var) {
-    library("RPostgreSQL")
-    pg <- dbConnect(PostgreSQL())
-    sql <- paste0("ALTER TABLE ", table, " ALTER COLUMN ",
-              var, " TYPE integer USING ", var)
-    dbGetQuery(pg, sql)
-    dbDisconnect(pg)
-}
-
+# Merge tables ----
 pg <- dbConnect(PostgreSQL())
 dbGetQuery(pg,"
     ALTER TABLE audit.feed09filing ADD COLUMN disclosure_text text;
@@ -119,25 +93,4 @@ dbGetQuery(pg,"
            WHERE a.res_notify_key=b.res_notify_key;
            
     DROP TABLE audit.disclosure_text;")
-
-# Get audit.feed09cat ----
-library("RPostgreSQL")
-pg <- dbConnect(PostgreSQL())
-
-dbGetQuery(pg, "
-    DROP TABLE IF EXISTS audit.feed09cat;
-    DROP TABLE IF EXISTS audit.feed09tocat")
-
-dbDisconnect(pg)
-
-system('perl ./wrds_to_pg_v2 audit.feed09cat')
-system('perl ./wrds_to_pg_v2 audit.feed09tocat')
-system('perl ./wrds_to_pg_v2 audit.feed09period')
-
-convertToInteger("audit.feed09cat", "res_category_fkey")
-convertToInteger("audit.feed09tocat", "res_notify_key")
-convertToInteger("audit.feed09tocat", "res_category_fkey")
-convertToInteger("audit.feed09period", "res_notify_key")
-convertToDouble("audit.feed09period", "res_period_aud_fkey")
-convertToInteger("audit.feed09period", "res_period_aud_fkey")
- 
+dbDisconnect(pg)  
