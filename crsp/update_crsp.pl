@@ -46,8 +46,8 @@ $dsi = $dsi >> 8;
 
 if ($dsi) {
     # system("psql -f crsp/crsp_indexes.sql");
-    system("CREATE INDEX ON crsp.dsi (date)'");
-    system("psql -f crsp/make_trading_dates");
+    system("psql -c 'CREATE INDEX ON crsp.dsi (date)'");
+    system("psql -f crsp/make_trading_dates.sql");
 }
 
 $dsedelist = system("./wrds_to_pg_v2 crsp.dsedelist --fix-missing");
@@ -72,13 +72,12 @@ if ($dport | $dsf | $dsi | $dsedelist) {
     system("psql -f crsp/crsp_make_rets_alt.sql")
 }
 
-
 $ccmxpf_linktable = system("./wrds_to_pg_v2 crsp.ccmxpf_linktable --fix-missing");
 $ccmxpf_linktable = $ccmxpf_linktable >> 8;
 
 if ($ccmxpf_linktable) {
     system("psql -c 'CREATE INDEX ON crsp.ccmxpf_linktable (lpermno)'");
-    system("psql -c 'CREATE INDEX ON crsp.ccmxpf_linktable (gvkey)");
+    system("psql -c 'CREATE INDEX ON crsp.ccmxpf_linktable (gvkey)'");
 }
 
 $ccmxpf_lnkhist = system("./wrds_to_pg_v2 crsp.ccmxpf_lnkhist --fix-missing");
@@ -107,14 +106,22 @@ if ($stocknames) {
 $dseexchdates = system("./wrds_to_pg_v2 crsp.stocknames");
 $dseexchdates = $dseexchdates >> 8;
 if ($dseexchdates) {
-    system("psql -c 'CREATE INDEX ON crsp.dseexchdates (permno)');
+    system("psql -c 'CREATE INDEX ON crsp.dseexchdates (permno)'");
 }
 
 # Update other data sets
-system("
-    ./wrds_to_pg_v2 crsp.msp500list;
-    ./wrds_to_pg_v2 crsp.ccmxpf_lnkused --fix-missing;
-    ./wrds_to_pg_v2 crsp.fund_names --fix-missing;
-    psql -f permissions.sql")
+system("./wrds_to_pg_v2 crsp.msp500list;");
+system("./wrds_to_pg_v2 crsp.ccmxpf_lnkused --fix-missing;");
+system("./wrds_to_pg_v2 crsp.fund_names --fix-missing;");
+system("psql -f permissions.sql");
 
-
+$any_updated = $dsf | $dseexchdates | $stocknames | $dsedist
+                    | $ccmxpf_lnkhist | $ccmxpf_linktable | $dsedist
+                    | $msf | $msi | $msedelist 
+                    | $dsedelist | $dsi | $dport;
+$any_updated = $dsf;
+$cmd = "pg_dump --format custom --no-tablespaces --file ";
+$cmd .= "~/Dropbox/pg_backup/crsp.backup --schema 'crsp'";
+if ($any_updated) {
+    system($cmd);
+}
