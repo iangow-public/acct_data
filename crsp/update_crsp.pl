@@ -69,7 +69,8 @@ if ($dport) {
 }
 
 if ($dport | $dsf | $dsi | $dsedelist) {
-    system("psql -f crsp/crsp_make_rets_alt.sql")
+    system("psql -f crsp/crsp_make_rets_alt.sql");
+    system("psql -f crsp/crsp_make_rets_alt_2.sql");
 }
 
 $ccmxpf_linktable = system("./wrds_to_pg_v2 crsp.ccmxpf_linktable --fix-missing");
@@ -119,7 +120,7 @@ $any_updated = $dsf | $dseexchdates | $stocknames | $dsedist
                     | $ccmxpf_lnkhist | $ccmxpf_linktable | $dsedist
                     | $msf | $msi | $msedelist 
                     | $dsedelist | $dsi | $dport;
-$any_updated = $dsf;
+$any_updated = 1;
 $cmd = "pg_dump --format custom --no-tablespaces --file ";
 $cmd .= "~/Dropbox/pg_backup/crsp.backup --schema 'crsp'";
 if ($any_updated) {
