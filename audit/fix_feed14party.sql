@@ -1,5 +1,3 @@
-
-
 ALTER TABLE audit.feed14party ADD COLUMN company_fkey_temp  integer;
 
 UPDATE audit.feed14party SET company_fkey_temp=CASE WHEN company_fkey='.' THEN NULL ELSE company_fkey::integer END;
@@ -21,6 +19,3 @@ ALTER TABLE audit.feed14party ALTER COLUMN third_party TYPE boolean USING third_
 ALTER TABLE audit.feed14party ALTER COLUMN is_debtor TYPE boolean USING is_debtor=1;
 ALTER TABLE audit.feed14party ALTER COLUMN is_creditor TYPE boolean USING is_creditor=1;
 ALTER TABLE audit.feed14party ALTER COLUMN been_terminated TYPE boolean USING been_terminated=1;
-
-
-
