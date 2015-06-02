@@ -7,7 +7,7 @@ my $dbh = DBI->connect("dbi:Pg:dbname=$dbname", 'igow')
 	or die "Cannot connect: " . $DBI::errstr;
 
 $sql = "
-  SET datestyle=DROP TABLE IF EXISTS issvoting.npx_id;
+  DROP TABLE IF EXISTS issvoting.npx_id;
   CREATE TABLE issvoting.npx_id
 (
   instid integer,
@@ -22,8 +22,8 @@ $dbh->do($sql);
 for ($year = 2003; $year <= 2011; $year++) {
   $time = localtime; 
   $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
-  $filename = "~/Dropbox/research/activism/data/va/";
-  $filename = "NPX_File_ID_july_01_" . $year . "_June_30_" . ($year+1) . ".txt.gz";
+  $filename = "/Users/igow/Dropbox/data/va/";
+  $filename .= "NPX_File_ID_july_01_" . $year . "_June_30_" . ($year+1) . ".txt.gz";
   printf "Beginning import of $filename at $now_string\n";  
 
   # Note that some of the ISS files have empty lines at the end. This stops
@@ -31,7 +31,7 @@ for ($year = 2003; $year <= 2011; $year++) {
   # these as empty lines. So, I simply insert \. into any last line that doesn't
   # begin with a number. This \. is an EOF flag for COPY. 
   $cmd  = "gunzip -c \"$filename\" ";
-  $cmd .=  "| /usr/local/pgsql/bin/psql -U igow ";
+  $cmd .=  "| psql -U igow ";
   $cmd .= "-d $dbname -c \"SET datestyle=\"ymd\"; COPY issvoting.npx_id FROM STDIN CSV HEADER ";
   $cmd .= "DELIMITER '\t' ENCODING 'latin1' \";";
   $result = system($cmd);
