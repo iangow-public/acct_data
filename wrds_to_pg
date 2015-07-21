@@ -28,7 +28,9 @@ GetOptions('fix-missing' => \$fix_missing,
             'dbname=s' => \$dbname,
             'updated=s' => \$updated,
             'fix-cr' => \$fix_cr,
-            'drop=s' => \$drop); 
+            'drop=s' => \$drop,
+            'obs=s' => \$obs); 
+ 
 
 # Get schema and table name from command line. I have set my database
 # up so that these line up with the names of the WRDS library and data
@@ -39,8 +41,20 @@ $db_schema = $table_args[0];
 $table_name = $table_args[1];
 $pg_table = $table_name;
 
+if ($obs ne '') {
+    $obs_str = "obs=$obs"
+} else {
+    $obs_str = "";
+}
+
 if ($drop ne '') {
-  $table_name = "$table_name(drop=$drop)";
+    $drop_str = "drop=$drop"
+} else {
+    $drop_str = "";
+}
+
+if ($obs ne '' || $drop ne '') {
+    $table_name = "$table_name($drop_str $obs_str)";
 }
 
 $db = "$db_schema.";
@@ -201,7 +215,7 @@ if ($fix_cr) {
     $fix_cr_code = "";
 }
 
-if ($fix_missing | $drop ne '') {
+if ($fix_missing | $drop ne '' | $obs ne '') {
     # If need to fix special missing values, then convert them to 
     # regular missing values, then run PROC EXPORT
     $dsf_fix =  ($table_name eq "dsf" ? "format numtrd 8.;\n" : "");
@@ -211,8 +225,8 @@ if ($fix_missing | $drop ne '') {
       libname pwd '/sastemp6';
       
       * Fix missing values;
-      data pwd.schema;
-          set $db$pg_table(drop=$drop);
+      data pwd.$wrds_id;
+          set $db$pg_table($drop_str $obs_str);
           $dsf_fix
           
           $fix_cr_code
@@ -224,7 +238,7 @@ if ($fix_missing | $drop ne '') {
           end;
       run;
       
-      proc export data=pwd.schema outfile=stdout dbms=csv;
+      proc export data=pwd.$wrds_id outfile=stdout dbms=csv;
       run;";
     
 } else {
