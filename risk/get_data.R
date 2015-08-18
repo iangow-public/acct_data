@@ -108,4 +108,4 @@ replicate("risk", "rmgovernance")
 
 system.time(temp <- get_data("risk", "proposals"))
 system.time(temp <- get_data("risk", "rmgovernance"))
-system.time(temp <- get_data("risk", "votes"))
+# system.time(temp <- get_data("risk", "votes"))
