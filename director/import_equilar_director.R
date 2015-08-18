@@ -139,5 +139,8 @@ rs <- dbGetQuery(pg, sql)
 sql <- paste(readLines("equilar/create_equilar_proxies.sql"), collapse="\n")
 rs <- dbGetQuery(pg, sql)
 
+sql <- "CREATE INDEX ON director.equilar_proxies (file_name)"
+rs <- dbGetQuery(pg, sql)
+
 rs <- dbDisconnect(pg)
 rs <- dbUnloadDriver(PostgreSQL())
