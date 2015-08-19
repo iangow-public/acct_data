@@ -14,7 +14,6 @@ convertToInteger <- function(vec) {
 get_iclink <- function() {
   
   sas_code <- "
-    libname home '~';
     
     %include \"/wrds/sample_programs/iclink.sas\";
           
@@ -60,4 +59,14 @@ rs <- dbWriteTable(pg, c("ibes", "iclink"), iclink, overwrite=TRUE, row.names=FA
 rs <- dbGetQuery(pg, "CREATE INDEX ON ibes.iclink (ticker)")
 
 rs <- dbDisconnect(pg)
-rs <- dbUnloadDriver(drv)
+
+pg_comment <- function(table, comment) {
+    library(RPostgreSQL)
+    pg <- dbConnect(PostgreSQL())
+    sql <- paste0("COMMENT ON TABLE ", table, " IS '",
+                  comment, " ON ", Sys.Date() , "'")
+    rs <- dbGetQuery(pg, sql)
+    dbDisconnect(pg)
+}
+
+pg_comment("ibes.iclink", "Created using ibes/get_iclink.R")

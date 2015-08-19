@@ -3,5 +3,6 @@
 .RData
 *.swp
 *.pdf
+*.Rout
 rpostgresql-read-only
 25_Portfolios_5x5.txt
