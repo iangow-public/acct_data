@@ -114,7 +114,7 @@ if ($dseexchdates) {
 system("./wrds_to_pg_v2 crsp.msp500list;");
 system("./wrds_to_pg_v2 crsp.ccmxpf_lnkused --fix-missing;");
 system("./wrds_to_pg_v2 crsp.fund_names --fix-missing;");
-system("psql -f permissions.sql");
+system("psql -f pg/permissions.sql");
 
 $any_updated = $dsf | $dseexchdates | $stocknames | $dsedist
                     | $ccmxpf_lnkhist | $ccmxpf_linktable | $dsedist
