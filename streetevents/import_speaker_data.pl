@@ -3,7 +3,7 @@
 # Script to import StreetEvents conference call data into my
 # PostgreSQL database
 # Author: Ian Gow
-# Last modified: 2015-01-21
+# Last modified: 2015-08-21
 
 # use various modules module
 use DBI;
@@ -15,7 +15,7 @@ use utf8; # does not enable Unicode output - it enables you to type Unicode in y
 use File::Basename;
 use HTML::Entities;
 use Time::localtime;
-use Env qw($PGDATABASE);
+use Env qw($PGDATABASE $PGUSER $PGUSER $PGHOST);
 
 $gz_file = @ARGV[0];
 
@@ -23,12 +23,12 @@ $gz_file = @ARGV[0];
 binmode(STDOUT, ":utf8");
 
 # Connect to my database
-$dbname = "crsp";
-my $dbh = DBI->connect("dbi:Pg:dbname=$dbname", 'igow')	
-	or die "Cannot connect: " . $DBI::errstr;
+$PGDATABASE = $PGDATABASE ? $PGDATABASE : "crsp";
+$PGUSER = $PGUSER ? $PGUSER : "igow";
+$PGHOST= $PGHOST ? $PGHOST : "localhost";
 
-# Run SQL to create the table
-$dbh->do($sql);
+my $dbh = DBI->connect("dbi:Pg:dbname=$PGDATABASE;host=$PGHOST", "$PGUSER")	
+	or die "Cannot connect: " . $DBI::errstr;
 
 sub analyse_text {
   # Look for consecutive portions of text in this format:
