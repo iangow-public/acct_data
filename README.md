@@ -9,22 +9,22 @@ This repository contains code to pull together data from various sources includi
 
 Note that some of these data sets are proprietary, so the code will only work if you have access to the data in some form.
 
-- `wrds_to_pg`: This Perl script takes the following arguments:
+- `wrds_to_pg.pl`: This Perl script takes the following arguments:
     - `--fix-missing`: SAS's `PROC EXPORT` converts special missing values (e.g., `.B`) to strings. So my code converts these to "regular" missing values so that PostgreSQL can handle them as missing values of the correct type.
-    - `--wrds-id=wrds_id`: Specify your WRDS ID here
-    - `--dbname=dbname`: My database is called `crsp`, so I say `--dbname=crsp` here
+    - `--wrds-id=wrds_id`: Specify your WRDS ID here. My WRDS ID is `iangow`, so I say `--wrds-id=iangow` here.
+    - `--dbname=dbname`: My database is called `crsp`, so I say `--dbname=crsp` here.
     - `--updated=some_string`: This is used by the script `wrds_to_pg_v2` to check if the table on WRDS has been updated since it was last pulled into the database.
-    - `obs=obs`: Optional argument to limit the number of observations imported from WRDS. For example, `obs=1000` will limit the data to 1000 observations.
+    - `--obs=obs`: Optional argument to limit the number of observations imported from WRDS. For example, `--obs=1000` will limit the data to 1000 observations.
 
-- `wrds_to_pg_v2`: Except for `updated` this has all the options that `wrds_to_pg` has. But this script compares the local and WRDS versions of the data and only updates if it needs to do so. Additionally, `wrds_to_pg_v2` accepts a command-line argument `--force`, which forces update regardless of whether an update has occurred (this is useful for debugging).
+- `wrds_to_pg_v2.pl`: Except for `updated` this has all the options that `wrds_to_pg.pl` has. But this script compares the local and WRDS versions of the data and only updates if it needs to do so. Additionally, `wrds_to_pg_v2.pl` accepts a command-line argument `--force`, which forces update regardless of whether an update has occurred (this is useful for debugging).
 
 So 
 ```
-wrds_to_pg_v2 crsp.msi --wrds_id=iangow --dbname=crsp
+wrds_to_pg_v2.pl crsp.msi --wrds_id=iangow --dbname=crsp
 ```
 updates the monthly stock index file from CRSP and 
 ```
-wrds_to_pg_v2 crsp.msf --wrds_id=iangow --dbname=crsp --fix-missing
+wrds_to_pg_v2.pl crsp.msf --wrds_id=iangow --dbname=crsp --fix-missing
 ```
 updates the monthly stock file from CRSP (this file has special missing values, hence the additional flag).
 

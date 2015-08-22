@@ -2,7 +2,7 @@
 use DBI;
 use Getopt::Long;
 use Time::localtime;
-use Env qw($PGDATABASE);
+use Env qw($PGDATABASE $PGUSER $PGHOST $EDGAR_DIR);
 
 ################################################
 # 0. Get command-line arguments                #
@@ -19,7 +19,8 @@ use Env qw($PGDATABASE);
 # --dbname=your_database, otherwise environment variable
 # PGDATABASE will be used.
 # optional variable with default value
-my $wrds_id = 'iangow';my $dbname = $PGDATABASE;
+my $wrds_id = 'iangow';
+my $dbname = $PGDATABASE;
 my $force = '';
 my $fix_missing = '';
 my $fix_cr = '';
@@ -113,7 +114,7 @@ $modfied =~ s/\s+$//;
 # 3. If updated table available, get from WRDS #
 ################################################
 if ($modified ne $comment || $force) {
-    $cmd = "./wrds_to_pg $db_schema.$table_name"; 
+    $cmd = "./wrds_to_pg.pl $db_schema.$table_name"; 
     $cmd .= ($fix_missing eq '' ? '' : ' --fix-missing');
     $cmd .= ($fix_cr eq '' ? '' : ' --fix-cr');
     $cmd .= ($obs eq '' ? '' : " --obs=$obs");

@@ -9,7 +9,7 @@ use Env qw($PGDATABASE);
 ################################################
 
 # Extract options from the command line
-# Example ./wrds_to_pg comp.idx_index --fix-missing --wrds-id iangow
+# Example ./wrds_to_pg.pl comp.idx_index --fix-missing --wrds-id iangow
 # gets comp.idx_index from WRDS using WRDS ID iangow. It also converts 
 # special missing values (e.g., .Z) to regular missing values (i.e., .)
 #

@@ -59,7 +59,7 @@ dbGetQuery(pg, "
         USING regexp_replace(file_accepted,  '(\\d{2}[A-Z]{3}\\d{4}):', '\\1 ' )::timestamp")
 dbDisconnect(pg)  
 
-# system('perl ./wrds_to_pg_v2 audit.feed09filing --drop="disclosure_text file_date_num"')
+# system('perl ./wrds_to_pg_v2.pl audit.feed09filing --drop="disclosure_text file_date_num"')
 
 sas_code <- "
     libname pwd '/sastemp6';
