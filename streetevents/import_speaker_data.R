@@ -46,7 +46,7 @@ file_list <- dbGetQuery(pg, "
         INNER JOIN latest_mtime
         USING (file_name, last_update)) 
     
-    SELECT file_path
+    SELECT DISTINCT file_path
     FROM calls
     WHERE (file_name, last_update) NOT IN
         (SELECT file_name, last_update FROM streetevents.speaker_data)")
