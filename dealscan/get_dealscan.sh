@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 cd ..
 ./wrds_to_pg_v2 dealscan.borrowerbase
 ./wrds_to_pg_v2 dealscan.company

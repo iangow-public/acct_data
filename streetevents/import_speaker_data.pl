@@ -3,7 +3,7 @@
 # Script to import StreetEvents conference call data into my
 # PostgreSQL database
 # Author: Ian Gow
-# Last modified: 2015-01-21
+# Last modified: 2015-08-21
 
 # use various modules module
 use DBI;
