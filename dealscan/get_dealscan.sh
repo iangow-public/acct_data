@@ -29,4 +29,5 @@
 ./wrds_to_pg_v2.pl dealscan.link_table
 ./wrds_to_pg_v2.pl dealscan.dbo_df_fac_dates_data
 
-pg_dump --format custom --no-tablespaces --verbose --file ~/Dropbox/pg_backup/dealscan.backup --schema "dealscan" "crsp"
+pg_dump --format custom --no-tablespaces --verbose \
+    --file $PGBACKUP_DIR/dealscan.backup --schema "dealscan" "crsp"

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-cd ..
 ./wrds_to_pg_v2.pl comp.anncomp 
 ./wrds_to_pg_v2.pl comp.adsprate
 ./wrds_to_pg_v2.pl comp.co_hgic
@@ -17,6 +16,7 @@ cd ..
 ./wrds_to_pg_v2.pl comp.g_sec_divid
 psql < comp/create_ciks.sql
 psql < comp/comp_indexes.sql
-psql < permissions.sql
+psql < pg/permissions.sql
 
-pg_dump --format custom --no-tablespaces --verbose --file ~/Dropbox/pg_backup/comp.backup --schema "comp" "crsp"
+pg_dump --format custom --no-tablespaces --verbose --file \
+    $PGBACKUP_DIR/comp.backup --schema "comp" "crsp"

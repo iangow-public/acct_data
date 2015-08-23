@@ -73,6 +73,7 @@ Environment variables that I use include:
 - `PGHOST`: Where the PostgreSQL database is to be found (this will be `localhost` if its on the same machine as you're running the code on)
 - `WRDS_ID`: Your [WRDS](https://wrds-web.wharton.upenn.edu/wrds/) ID.
 - `EDGAR_DIR`: The local location of a partial mirror of EDGAR.
+- `PGBACKUP_DIR`: The directory where backups of PostgreSQL data created by `pg_dump` should go.
 
 I set these environment variables in `~/.profile`:
 
@@ -82,6 +83,7 @@ export PGDATABASE="crsp"
 export EDGAR_DIR="/Volumes/2TB/data"
 export WRDS_ID="iangow"
 export PGUSER="igow"
+export PGBACKUP_DIR="/Users/igow/Dropbox/pg_backup/"
 ```
 
 I also set them in `~/.Rprofile`, as RStudio doesn't seem to pick up the settings in `~/.profile` in recent versions of OS X:
@@ -90,6 +92,7 @@ I also set them in `~/.Rprofile`, as RStudio doesn't seem to pick up the setting
 Sys.setenv(EDGAR_DIR="/Volumes/2TB/data")
 Sys.setenv(PGHOST="localhost")
 Sys.setenv(PGDATABASE="crsp")
+Sys.setenv(PGBACKUP_DIR="/Users/igow/Dropbox/pg_backup/")
 ```
 
 ### 7. A WRDS ID
