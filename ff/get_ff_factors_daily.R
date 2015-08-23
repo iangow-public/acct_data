@@ -22,12 +22,13 @@ ff.url <- paste(ff.url.partial, "F-F_Research_Data_Factors_daily_TXT.zip", sep="
 f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f, list=TRUE)
-
+z <- unzip(f, files=as.character(file.list[1,1]))
 # Parse the data
 ff_daily_factors <-
-    read.fwf(unzip(f, files=as.character(file.list[1,1])),
+    read.fwf(z,
              widths=c(8,8,8,8,10), header=FALSE,
              stringsAsFactors=FALSE, skip=5)
+unlink(z)
 
 # Clean the data
 for (i in 2:5) ff_daily_factors[,i] <- as.numeric(trim(ff_daily_factors[,i]))
@@ -51,7 +52,7 @@ ff_mom_factor <-
     read.fwf(unzip(f, files=as.character(file.list[1,1])),
              widths=c(8,8), header=FALSE,
              stringsAsFactors=FALSE, skip=14)
-
+unlink(file.list[1,1])
 # Clean the data
 ff_mom_factor[,2] <- as.numeric(trim(ff_mom_factor[,2]))/100
 names(ff_mom_factor) <- c("date", "umd")

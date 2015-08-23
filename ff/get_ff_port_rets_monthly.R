@@ -8,6 +8,7 @@ download.file(ff.url, f)
 file.list <- unzip(f) #, list=TRUE)
 
 raw.data <- readLines(as.character(file.list))
+unlink(file.list)
 
 read.fwd <- function(text, widths) {
   # Function mimicks read.fwf, but on a vector of strings

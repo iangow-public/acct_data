@@ -25,16 +25,17 @@ ff.url <- paste(ff.url.partial, "BE-ME_Breakpoints_TXT.zip", sep="/")
 f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f, list=TRUE)
-
+z <- unzip(f, files=as.character(file.list[1,1]))
 # Parse the data
 ff_beme <-
-    read.fwf(unzip(f, files=as.character(file.list[1,1])),
+    read.fwf(z,
              widths=c(4,5,5,rep(9,20)), header=FALSE,
              stringsAsFactors=FALSE, skip=3)
 names(ff_beme) <- c("year", "n_neg", "n_pos", paste("p", seq(5, 100, 5), sep=""))
 
-# Clean the data
+unlink(z)
 
+# Clean the data
 ff_beme$year <- as.integer(ff_beme$year)
 ff_beme <- subset(ff_beme, !is.na(year))
 for (i in 2:(dim(ff_beme)[2])) ff_beme[,i] <- as.numeric(trim(ff_beme[,i]))
@@ -60,12 +61,13 @@ ff.url <- paste(ff.url.partial, "ME_Breakpoints_TXT.zip", sep="/")
 f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f, list=TRUE)
-
+z <- unzip(f, files=as.character(file.list[1,1]))
 # Parse the data
 ff_me <-
-    read.fwf(unzip(f, files=as.character(file.list[1,1])),
+    read.fwf(z,
              widths=c(4,2,5,rep(10,20)), header=FALSE,
              stringsAsFactors=FALSE, skip=1)
+unlink(z)
 names(ff_me) <- c("year", "month", "n", paste("p", seq(5, 100, 5), sep=""))
 
 # Clean the data

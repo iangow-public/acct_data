@@ -23,9 +23,10 @@ trim <- function(string) {
 extract_ff_ind_data <- function (file) {
   
   # Read in the data in a plain form
-  ff_ind <- as.vector(read.delim(unzip(f, files=file), header=FALSE, 
+  z <- unzip(f, files=file)
+  ff_ind <- as.vector(read.delim(z, header=FALSE, 
                                  stringsAsFactors=FALSE))
-  
+  unlink(z)
   # The first 10 characters of each line are the industry data, but only the first
   # row of the data for the SIC codes in an industry are filled in;
   # so fill in the rest.
