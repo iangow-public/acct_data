@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-cd ..
 ./wrds_to_pg_v2.pl dealscan.borrowerbase
 ./wrds_to_pg_v2.pl dealscan.company
 ./wrds_to_pg_v2.pl dealscan.currfacpricing
