@@ -18,7 +18,7 @@ trim <- function(string) {
 ################################################################################
 
 # Download the data and unzip it
-ff.url <- paste(ff.url.partial, "F-F_Research_Data_Factors.zip", sep="/")
+ff.url <- paste(ff.url.partial, "F-F_Research_Data_Factors_TXT.zip", sep="/")
 f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f, list=TRUE)
@@ -44,7 +44,7 @@ for (i in 3:5) ff_monthly_factors[,i] <- ff_monthly_factors[,i]/100
 
 
 # Download the data and unzip it
-ff.url <- paste(ff.url.partial, "F-F_Momentum_Factor.zip", sep="/")
+ff.url <- paste(ff.url.partial, "F-F_Momentum_Factor_TXT.zip", sep="/")
 f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f, list=TRUE)
@@ -80,8 +80,7 @@ ff_monthly_factors <- subset(ff_monthly_factors, subset=!is.na(date))
 #                      Load the data into my database                          #
 ################################################################################ 
 library(RPostgreSQL)
-drv <- dbDriver("PostgreSQL")
-pg <- dbConnect(drv, dbname = "crsp")
+pg <- dbConnect(PostgreSQL())
 rs <- dbWriteTable(pg,c("ff","factors_monthly"), ff_monthly_factors, 
                    overwrite=TRUE, row.names=FALSE)
 

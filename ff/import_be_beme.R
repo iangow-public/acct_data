@@ -21,7 +21,7 @@ trim <- function(string) {
 ################################################################################
 
 # Download the data and unzip it
-ff.url <- paste(ff.url.partial, "BE-ME_Breakpoints.zip", sep="/")
+ff.url <- paste(ff.url.partial, "BE-ME_Breakpoints_TXT.zip", sep="/")
 f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f, list=TRUE)
@@ -40,11 +40,10 @@ ff_beme <- subset(ff_beme, !is.na(year))
 for (i in 2:(dim(ff_beme)[2])) ff_beme[,i] <- as.numeric(trim(ff_beme[,i]))
 
 library(RPostgreSQL)
-drv <- dbDriver("PostgreSQL")
-pg <- dbConnect(drv, dbname = dbname)
+
+pg <- dbConnect(PostgreSQL())
 rs <- dbWriteTable(pg,c("ff","beme"), ff_beme, 
                    overwrite=TRUE, row.names=FALSE)
-rs <- dbGetQuery(pg, "ALTER TABLE ff.beme OWNER TO activism")
 sql <- paste0("
     COMMENT ON TABLE ff.beme IS
     'CREATED USING import_be_beme.R ON ", Sys.time() , "';")
@@ -57,7 +56,7 @@ rs <- dbGetQuery(pg, "VACUUM ff.beme")
 ################################################################################
 
 # Download the data and unzip it
-ff.url <- paste(ff.url.partial, "ME_Breakpoints.zip", sep="/")
+ff.url <- paste(ff.url.partial, "ME_Breakpoints_TXT.zip", sep="/")
 f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f, list=TRUE)
@@ -76,7 +75,6 @@ for (i in 4:(dim(ff_me)[2])) ff_me[,i] <- as.numeric(trim(ff_me[,i]))
 
 rs <- dbWriteTable(pg,c("ff","me"), ff_me, 
                    overwrite=TRUE, row.names=FALSE)
-rs <- dbGetQuery(pg, "ALTER TABLE ff.me OWNER TO activism")
 sql <- paste0("
     COMMENT ON TABLE ff.me IS
     'CREATED USING import_be_beme.R ON ", Sys.time() , "';")
@@ -96,7 +94,6 @@ table(ff_me_alt$quintile)
 
 rs <- dbWriteTable(pg,c("ff","me_alt"), ff_me_alt, 
                    overwrite=TRUE, row.names=FALSE)
-rs <- dbGetQuery(pg, "ALTER TABLE ff.me_alt OWNER TO activism")
 sql <- paste0("
     COMMENT ON TABLE ff.me_alt IS
     'CREATED USING import_be_beme.R ON ", Sys.time() , "';")
@@ -115,7 +112,6 @@ table(ff_beme_alt$quintile)
 
 rs <- dbWriteTable(pg,c("ff","beme_alt"), ff_beme_alt, 
                    overwrite=TRUE, row.names=FALSE)
-rs <- dbGetQuery(pg, "ALTER TABLE ff.beme_alt OWNER TO activism")
 sql <- paste0("
     COMMENT ON TABLE ff.beme_alt IS
     'CREATED USING import_be_beme.R ON ", Sys.time() , "';")

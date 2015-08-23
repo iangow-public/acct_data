@@ -6,3 +6,10 @@
 *.Rout
 rpostgresql-read-only
 25_Portfolios_5x5.txt
+Siccodes*.txt
+BE-ME_Breakpoints.txt
+F-F_Momentum_Factor.TXT
+F-F_Momentum_Factor_daily.txt
+F-F_Research_Data_Factors.txt
+F-F_Research_Data_Factors_daily.txt
+ME_Breakpoints.txt

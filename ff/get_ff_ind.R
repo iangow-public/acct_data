@@ -63,8 +63,7 @@ extract_ff_ind_data <- function (file) {
 
 # Load the data into my database
 library(RPostgreSQL)
-drv <- dbDriver("PostgreSQL")
-pg <- dbConnect(drv, dbname = "crsp")
+pg <- dbConnect(PostgreSQL())
 # Extract the data of interest
 for (i in c(12, 17, 48, 49)) {
   temp <- extract_ff_ind_data(paste0("Siccodes", i , ".txt"))
