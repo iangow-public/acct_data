@@ -29,7 +29,7 @@ get_iclink <- function() {
   # been transferred to the local computer (trial and error suggested this was
   # the most efficient approach).
   # -stdio means that SAS will take input from STDIN and output to STDOUT
-  sas_command <- paste("ssh -C iangow@wrds.wharton.upenn.edu ",
+  sas_command <- paste("ssh -C $WRDS_ID@wrds.wharton.upenn.edu ",
                        "'sas -stdio -noterminal; cat data.dta' > ",
                        temp_file)
   

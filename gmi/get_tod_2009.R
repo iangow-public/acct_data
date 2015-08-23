@@ -1,5 +1,5 @@
 # Download SAS file and read into R
-cmd <- "scp iangow@wrds.wharton.upenn.edu"
+cmd <- "scp $WRDS_ID@wrds.wharton.upenn.edu"
 cmd <- paste0(cmd, ":/wrds/gmiratings/sasdata/takeoverdefenses2009.sas7bdat .")
 system(cmd)
 library(haven)

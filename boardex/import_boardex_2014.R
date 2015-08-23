@@ -70,8 +70,6 @@ addTableToDatabase <- function(df, table.name) {
 }
 
 # Read in file list ----
-Sys.setenv(PGHOST="iangow.me", PGDATABASE="crsp")
-
 file_list <- sort(list.files("~/Dropbox/data/boardex/2014-10", pattern="*.csv.gz",
                         full.name=TRUE))
 

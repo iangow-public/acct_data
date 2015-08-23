@@ -2,7 +2,7 @@
 use DBI;
 use Getopt::Long;
 use Time::localtime;
-use Env qw($PGDATABASE $PGUSER $PGHOST $EDGAR_DIR);
+use Env qw($PGDATABASE $PGUSER $PGHOST $EDGAR_DIR $WRDS_ID);
 
 ################################################
 # 0. Get command-line arguments                #
@@ -19,7 +19,7 @@ use Env qw($PGDATABASE $PGUSER $PGHOST $EDGAR_DIR);
 # --dbname=your_database, otherwise environment variable
 # PGDATABASE will be used.
 # optional variable with default value
-my $wrds_id = 'iangow';
+my $wrds_id = $WRDS_ID;
 my $dbname = $PGDATABASE;
 my $force = '';
 my $fix_missing = '';

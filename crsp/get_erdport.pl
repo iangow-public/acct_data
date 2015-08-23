@@ -2,10 +2,10 @@
 use DBI;
 use Getopt::Long;
 use Time::localtime;
-use Env qw($PGDATABASE);
+use Env qw($PGDATABASE $WRDS_ID);
 
 my $dbname = $PGDATABASE;
-my $wrds_id = 'iangow';	# option variable with default value
+my $wrds_id = $WRDS_ID;	# option variable with default value
 GetOptions( 'wrds-id=s' => \$wrds_id,
             'dbname=s' => \$dbname); 
 
