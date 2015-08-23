@@ -1,10 +1,9 @@
 #!/usr/bin/env bash
-cd ..
 ./wrds_to_pg_v2.pl dealscan.borrowerbase
 ./wrds_to_pg_v2.pl dealscan.company
 ./wrds_to_pg_v2.pl dealscan.currfacpricing
-./wrds_to_pg_v2.pl dealscan.dbo_df_fac_dates_data
 ./wrds_to_pg_v2.pl dealscan.dealamendment
+./wrds_to_pg_v2.pl dealscan.dealpurposecomment
 ./wrds_to_pg_v2.pl dealscan.facility
 ./wrds_to_pg_v2.pl dealscan.facilityamendment
 ./wrds_to_pg_v2.pl dealscan.facilitydates
@@ -21,6 +20,8 @@ cd ..
 ./wrds_to_pg_v2.pl dealscan.networthcovenant
 ./wrds_to_pg_v2.pl dealscan.organizationtype
 ./wrds_to_pg_v2.pl dealscan.package
+./wrds_to_pg_v2.pl dealscan.packageassignmentcomment
+./wrds_to_pg_v2.pl dealscan.packageprepaymentcomment
 ./wrds_to_pg_v2.pl dealscan.performancepricing
 ./wrds_to_pg_v2.pl dealscan.performancepricingcomments
 ./wrds_to_pg_v2.pl dealscan.sublimits
