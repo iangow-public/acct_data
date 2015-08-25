@@ -277,8 +277,6 @@ foreach $field (split(',', $row)) {
     }
 }
 
-
-
 # Comment on table to reflect date it was updated
 my ($day,$month,$year)=($tm->mday(),$tm->mon(),$tm->year());
 if ($updated eq "") {

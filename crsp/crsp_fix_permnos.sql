@@ -8,7 +8,7 @@ CREATE OR REPLACE VIEW activist_director.permnos AS
     UNION
     SELECT DISTINCT missing_permnos.permno,
     missing_permnos.cusip AS ncusip
-    FROM activism.missing_permnos
+    FROM activist_director.missing_permnos
     WHERE missing_permnos.permno IS NOT NULL;
 
 ALTER VIEW activist_director.permnos OWNER TO activism;
