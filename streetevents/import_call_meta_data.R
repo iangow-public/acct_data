@@ -6,7 +6,7 @@ pg <- dbConnect(PostgreSQL())
 
 if (!dbExistsTable(pg, c("streetevents", "calls"))) {
     dbGetQuery(pg, "
-        CREATE TABLE streetevents.calls_test
+        CREATE TABLE streetevents.calls
             (
               file_path text,
               file_name text,
