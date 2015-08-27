@@ -37,8 +37,9 @@ I think that cloning using the SSH URL (e.g., `git@github.com:iangow/acct_data.g
 
 Many of the scripts rely on Perl (I use MacPorts, which I think currently defaults to v5.16).
 In addition, the Perl scripts generally interact with PostgreSQL using the Perl
-module `DBD::Pg` (see [here](http://search.cpan.org/dist/DBD-Pg/Pg.pm). 
+module `DBD::Pg` (see [here](http://search.cpan.org/dist/DBD-Pg/Pg.pm)). 
 I use MacPorts to install this `sudo port install p5-dbd-pg`.
+On Ubuntu, `sudo apt-get install libdbi-perl libdbd-pg-perl` would work.
 
 ### 3. R
 
