@@ -27,7 +27,7 @@ $PGDATABASE = $PGDATABASE ? $PGDATABASE : "crsp";
 $PGUSER = $PGUSER ? $PGUSER : "igow";
 $PGHOST= $PGHOST ? $PGHOST : "localhost";
 
-my $dbh = DBI->connect("dbi:Pg:dbname=$PGDATABASE;host=$PGHOST", "$PGUSER")	
+my $dbh = DBI->connect("dbi:Pg:dbname=$PGDATABASE;host=$PGHOST", "$PGUSER")
 	or die "Cannot connect: " . $DBI::errstr;
 
 sub analyse_text {
@@ -37,7 +37,7 @@ sub analyse_text {
   # -----------
   #  Something else
   # -----------
-  # 
+  #
   # The something is the speaker, the something else is what they said.
   # Split using the lines of ---s and then process each portion.
   my %values = split(/---{3,}/, $_[0]);
@@ -47,25 +47,25 @@ sub analyse_text {
     $speaker =~ s/\s{2,}/ /g;
     $speaker =~ s/^\s+//g;
     $speaker =~ s/\t+//g;
-    
+
     # Remove new line characters, multiple spaces, and leading spaces
     # Escape single-quotes for insertion using SQL
-    # (for example, "O'Donnell" becomes "O''Donnell"    
+    # (for example, "O'Donnell" becomes "O''Donnell"
     $the_text =~ s/\n/ /g;
     $the_text =~ s/^\s+//g;
     $the_text =~ s/\s{2,}/ /g;
     $the_text =~ s/'/''/g;
 
-    if ($the_text =~ /\?$/) { 
+    if ($the_text =~ /\?$/) {
       $context = "qa";
     }
-    
+
     # First, pull out {name, employer, role} and number
     # (number will be digits in square brackets)
     $speaker =~ /^(.*)\s+\[(\d+)\]\s+$/;
     $full_name = $1;
     $number = $2;
-    
+
     # Now parse {name, employer, role} into components
     $full_name =~ /^([^,]*),\s*(.*)\s+-\s+(.*)$/;
     $name = $1;
@@ -76,18 +76,18 @@ sub analyse_text {
     # (for example, "O'Donnell" becomes "O''Donnell"
     $role =~ s/'/''/g;
 
-     # Remove leading spaces, multiple spaces and
-    # escape single quates
+    # Remove leading spaces, multiple spaces and
+    # escape single quotes
     $employer =~ s/^\s+//g;
     $employer =~ s/\s+$//g;
     $employer =~ s/'/''/g;
-   
+
     if ($number eq '') {
       $number="NULL";
     }
-    
+
     # Remove leading spaces, multiple spaces and
-    # escape single quates 
+    # escape single quotes
     $name =~ s/'/''/g;
     $name =~ s/^\s+//g;
     $name =~ s/\s+$//g;
@@ -96,8 +96,8 @@ sub analyse_text {
       $employer= "";
       $role ="";
     }
-    print("$sql\n");
-     
+    # print("$sql\n");
+
     # Output results num_sentences
     $sql = "INSERT INTO streetevents.speaker_data ";
     $sql .= "( file_name, last_update, speaker_name, employer, role, ";
@@ -108,8 +108,7 @@ sub analyse_text {
   }
 }
 
-# Get a list of files to parse
-
+# Get file to parse
 $basename = basename($gz_file,@suffixlist);
 $basename =~ s/\.xml(\.gz)?$//g;
 open($fh, "<", $gz_file) or die;
@@ -122,24 +121,24 @@ my $doc = $parser->parse_fh( $fh );
 close $fh;
 foreach my $event ($doc->findnodes('/Event')) {
   my $type = $event->findvalue('./@eventTypeId');
-  
+
   my $ticker = $event->findnodes('./companyTicker');
-  my $last_update = $event->findvalue('./@lastUpdate');  
+  my $last_update = $event->findvalue('./@lastUpdate');
   my $lines = decode_entities($event->findnodes('./EventStory/Body'));
-  
+
   # Skip calls without tickers
-  if (!defined $ticker or $ticker =~ /^\s*$/) { next; } 
-  
+  if (!defined $ticker or $ticker =~ /^\s*$/) { next; }
+
   $lines =~ s/\r\n/\n/g;
-  
+
   # access XML data
-  # Look for  the word "Presentation" between a row of ===s a row of ---s and 
-  # then text followed by a row of ===s. Capture the latter text.  
+  # Look for  the word "Presentation" between a row of ===s a row of ---s and
+  # then text followed by a row of ===s. Capture the latter text.
   if ($lines =~ /={3,}\n(?:Presentation|Transcript)\n-{3,}(.*?)(?:={3,}|$)/s) {
     print "Hi!";
     $pres = $1;
   }
-  
+
   if (defined $pres) { $language = langof($pres); } # gives the most probable language
 
   $context = "pres";
