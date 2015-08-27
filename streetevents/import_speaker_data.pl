@@ -145,7 +145,7 @@ foreach my $event ($doc->findnodes('/Event')) {
   analyse_text($pres, $last_update);
 
   # Now do the same thing for Q&A as was done for the presentation
-  if ($lines =~ /={3,}\nQuestions and Answers\n-{3,}(.*?)(?:]]><\/Body>\s*)?$/s) {
+  if ($lines =~ /={3,}\nQuestions and Answers\n-{3,}(.*?)(?:\s*]]><\/Body>\s*)?$/s) {
     print "Hi again!";
     $qa = $1;
   }
