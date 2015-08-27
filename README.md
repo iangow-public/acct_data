@@ -53,8 +53,6 @@ You should have a PostgreSQL database to store the data.
 There are also some data dependencies in that some scripts assume the existence of other data in the database.
 For example, scripts that download filings generally refer to the PostgreSQL table `filings.filings` created by the script [get_filings.R](blob/master/filings/get_filings.R).
 
-- [] TODO: Document data dependencies
-
 ### 5. Bash
 
 A number of scripts here are Bash shell scripts.
@@ -126,8 +124,3 @@ updates the monthly stock index file from CRSP and
 wrds_to_pg_v2.pl crsp.msf --wrds_id=iangow --dbname=crsp --fix-missing
 ```
 updates the monthly stock file from CRSP (this file has special missing values, hence the additional flag).
-
-
-
-
-
