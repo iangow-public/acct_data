@@ -13,7 +13,7 @@ getSHA1 <- function(file_name) {
 
 pg <- dbConnect(PostgreSQL())
 
-streetevent.dir <- "/Volumes/2TB/data/streetevents"
+streetevent.dir <- file.path(Sys.getenv("EDGAR_DIR"), "streetevents_project")
 file_path <- list.files(streetevent.dir,
                    pattern="*_T.xml", recursive = TRUE,
                    include.dirs=FALSE, full.names = TRUE)
@@ -26,7 +26,7 @@ file.list$ctime <- file_info$ctime
 file.list$file_name <- gsub("\\.xml", "", basename(file.list$file_path))
 
 system.time({
-    file.list$sha1 <- unlist(mclapply(file.list$file_path, 
+    file.list$sha1 <- unlist(mclapply(file.list$file_path,
                                       getSHA1, mc.cores=12))
 })
 

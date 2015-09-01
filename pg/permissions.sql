@@ -34,7 +34,6 @@ GRANT SELECT ON ALL TABLES IN SCHEMA boardex TO crsp_plus;
 GRANT USAGE ON SCHEMA ciq TO crsp_plus;
 GRANT SELECT ON ALL TABLES IN SCHEMA ciq TO crsp_plus;
 
-
 -- Equilar access
 GRANT ALL ON SCHEMA director TO equilar_access;
 GRANT SELECT ON ALL TABLES IN SCHEMA director TO equilar_access;

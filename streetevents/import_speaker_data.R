@@ -19,7 +19,7 @@ if (!dbExistsTable(pg, c("streetevents", "speaker_data"))) {
               speaker_text text,
               language text
             );
-        
+
         SET maintenance_work_mem='3GB';
 
         CREATE INDEX ON streetevents.speaker_data (file_name, last_update);
@@ -30,22 +30,22 @@ if (!dbExistsTable(pg, c("streetevents", "speaker_data"))) {
 file_list <- dbGetQuery(pg, "
     SET work_mem='2GB';
 
-    WITH 
-    
+    WITH
+
     latest_mtime AS (
         SELECT a.file_name, last_update,
             max(DISTINCT mtime) AS mtime
-        FROM streetevents.calls_test AS a
+        FROM streetevents.calls AS a
         INNER JOIN streetevents.call_files
         USING (file_path)
         GROUP BY a.file_name, last_update),
-    
+
     calls AS (
         SELECT file_path, file_name, last_update
-        FROM streetevents.calls_test
+        FROM streetevents.calls
         INNER JOIN latest_mtime
-        USING (file_name, last_update)) 
-    
+        USING (file_name, last_update))
+
     SELECT DISTINCT file_path
     FROM calls
     WHERE (file_name, last_update) NOT IN
@@ -55,7 +55,7 @@ rs <- dbDisconnect(pg)
 
 # Create function to parse a StreetEvents XML file ----
 parseFile <- function(file_path) {
-    
+
     # Parse the indicated file using a Perl script
     system(paste("streetevents/import_speaker_data.pl", file_path),
            intern = TRUE)

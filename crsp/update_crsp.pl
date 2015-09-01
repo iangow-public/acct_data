@@ -1,5 +1,6 @@
 #!/usr/bin/env perl
-chdir('..') or die "$!";
+# chdir('..') or die "$!";
+use Env qw($PGBACKUP_DIR);
 
 # Update monthly data
 $msf = system("./wrds_to_pg_v2.pl crsp.msf --fix-missing");
@@ -120,9 +121,10 @@ $any_updated = $dsf | $dseexchdates | $stocknames | $dsedist
                     | $ccmxpf_lnkhist | $ccmxpf_linktable | $dsedist
                     | $msf | $msi | $msedelist 
                     | $dsedelist | $dsi | $dport;
-$any_updated = 1;
+
 $cmd = "pg_dump --format custom --no-tablespaces --file ";
-$cmd .= "~/Dropbox/pg_backup/crsp.backup --schema 'crsp'";
+$cmd .= "$PGBACKUP_DIR/crsp.backup --schema 'crsp'";
 if ($any_updated) {
+    print("Backing up crsp schema");
     system($cmd);
 }

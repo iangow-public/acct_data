@@ -37,8 +37,9 @@ I think that cloning using the SSH URL (e.g., `git@github.com:iangow/acct_data.g
 
 Many of the scripts rely on Perl (I use MacPorts, which I think currently defaults to v5.16).
 In addition, the Perl scripts generally interact with PostgreSQL using the Perl
-module `DBD::Pg` (see [here](http://search.cpan.org/dist/DBD-Pg/Pg.pm). 
+module `DBD::Pg` (see [here](http://search.cpan.org/dist/DBD-Pg/Pg.pm)). 
 I use MacPorts to install this `sudo port install p5-dbd-pg`.
+On Ubuntu, `sudo apt-get install libdbi-perl libdbd-pg-perl` would work.
 
 ### 3. R
 
@@ -52,8 +53,6 @@ in fact, this repository is set up as an RStudio project (open the file [acct_da
 You should have a PostgreSQL database to store the data.
 There are also some data dependencies in that some scripts assume the existence of other data in the database.
 For example, scripts that download filings generally refer to the PostgreSQL table `filings.filings` created by the script [get_filings.R](blob/master/filings/get_filings.R).
-
-- [] TODO: Document data dependencies
 
 ### 5. Bash
 
@@ -126,8 +125,3 @@ updates the monthly stock index file from CRSP and
 wrds_to_pg_v2.pl crsp.msf --wrds_id=iangow --dbname=crsp --fix-missing
 ```
 updates the monthly stock file from CRSP (this file has special missing values, hence the additional flag).
-
-
-
-
-
