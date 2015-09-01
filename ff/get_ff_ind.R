@@ -72,7 +72,8 @@ for (i in c(12, 17, 48, 49)) {
                      overwrite=TRUE, row.names=FALSE)
   
   rs <- dbGetQuery(pg, paste0("VACUUM ff.ind_", i))
-  
+  rs <- dbGetQuery(pg, paste0("CREATE INDEX ON ff.ind_", i,
+                              " (ind_num)"))
   sql <- paste0("
     COMMENT ON TABLE ff.ind_", i, " IS
     'CREATED USING get_ff_ind.R ON ", Sys.time() , "';")

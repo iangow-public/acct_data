@@ -8,7 +8,7 @@ f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f, list=TRUE)
 
-raw.data <- readLines(file.list[1,1])
+raw.data <- readLines(unzip(f, files=file.list[1,1]))
 unlist(file.list[1,1])
 
 read.fwd <- function(text, widths) {
@@ -61,7 +61,7 @@ for (i in 2:(dim(ewret)[2])) {
 }
 
 # Rearrange and merge the data ----
-library(reshape)
+library(reshape2)
 
 ewret_alt <- melt(subset(ewret, !is.na(year)), id.vars="year")
 ewret_alt$me <- gsub("s([1-5]).*", "\\1", ewret_alt$variable )
@@ -85,3 +85,4 @@ library(RPostgreSQL)
 pg <- dbConnect(PostgreSQL()) 
 rs <- dbWriteTable(pg, c("ff", "ff25"), ff25, 
                    overwrite=TRUE, row.names=FALSE)
+rs <- dbDisconnect(pg)
