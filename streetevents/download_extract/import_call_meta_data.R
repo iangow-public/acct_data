@@ -35,7 +35,7 @@ rs <- dbDisconnect(pg)
 parseFile <- function(file_path) {
 
     # Parse the indicate file using a Perl script
-    system(paste("streetevents/parse_xml_files.pl", file_path),
+    system(paste("streetevents/download_extract/parse_xml_files.pl", file_path),
            intern = TRUE)
 }
 

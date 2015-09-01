@@ -57,7 +57,7 @@ rs <- dbDisconnect(pg)
 parseFile <- function(file_path) {
 
     # Parse the indicated file using a Perl script
-    system(paste("streetevents/import_speaker_data.pl", file_path),
+    system(paste("streetevents/download_extract/import_speaker_data.pl", file_path),
            intern = TRUE)
 }
 

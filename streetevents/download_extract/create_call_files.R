@@ -11,8 +11,7 @@ getSHA1 <- function(file_name) {
     digest(file=file_name, algo="sha1")
 }
 
-pg <- dbConnect(PostgreSQL())
-
+# Get a list of files
 streetevent.dir <- file.path(Sys.getenv("EDGAR_DIR"), "streetevents_project")
 file_path <- list.files(streetevent.dir,
                    pattern="*_T.xml", recursive = TRUE,
