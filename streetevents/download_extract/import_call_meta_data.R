@@ -1,3 +1,4 @@
+#!/usr/bin/env Rscript
 # Get a list of files that need to be processed ----
 
 # Note that this assumes that streetevents.calls is up to date.
@@ -42,5 +43,5 @@ parseFile <- function(file_path) {
 # Apply parsing function to files ----
 library(parallel)
 system.time({
-    res <- unlist(mclapply(file_list$file_path, parseFile, mc.cores=12))
+    res <- unlist(mclapply(file_list$file_path, parseFile, mc.cores=8))
 })

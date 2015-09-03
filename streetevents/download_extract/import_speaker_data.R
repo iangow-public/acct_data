@@ -56,13 +56,18 @@ rs <- dbDisconnect(pg)
 # Create function to parse a StreetEvents XML file ----
 parseFile <- function(file_path) {
 
+    full_path <- file.path(Sys.getenv("EDGAR_DIR"),
+                           "streetevents_project",
+                           file_path)
+
     # Parse the indicated file using a Perl script
-    system(paste("streetevents/download_extract/import_speaker_data.pl", file_path),
+    system(paste("streetevents/download_extract/import_speaker_data.pl",
+                 full_path),
            intern = TRUE)
 }
 
 # Apply parsing function to files ----
 library(parallel)
 system.time({
-    res <- unlist(mclapply(file_list$file_path, parseFile, mc.cores=12))
+    res <- unlist(mclapply(file_list$file_path, parseFile, mc.cores=8))
 })

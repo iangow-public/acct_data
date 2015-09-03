@@ -26,7 +26,7 @@ file.list$file_name <- gsub("\\.xml", "", basename(file.list$file_path))
 
 system.time({
     file.list$sha1 <- unlist(mclapply(file.list$file_path,
-                                      getSHA1, mc.cores=12))
+                                      getSHA1, mc.cores=8))
 })
 
 library("RPostgreSQL")
