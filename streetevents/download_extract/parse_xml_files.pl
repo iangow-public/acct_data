@@ -8,16 +8,20 @@ use DBI;
 use XML::LibXML;
 use utf8; # just enables Unicode in the program.
 use File::Basename;
+use Env qw($PGDATABASE $PGUSER $PGUSER $PGHOST $EDGAR_DIR);
 
 # Add this to the program, before your print() statement to
 # enable UTF-8 printing.
 binmode(STDOUT, ":utf8");
 
 $gz_file = @ARGV[0];
+$PGDATABASE = $PGDATABASE ? $PGDATABASE : "crsp";
+$PGUSER = $PGUSER ? $PGUSER : "igow";
+$PGHOST= $PGHOST ? $PGHOST : "localhost";
+$base_dir = $EDGAR_DIR . '/streetevents_project/';
 
 # Connect to my database
-$dbname = "crsp";
-my $dbh = DBI->connect("dbi:Pg:dbname=$dbname", 'igow')    
+my $dbh = DBI->connect("dbi:Pg:dbname=$PGDATABASE;host=$PGHOST", "$PGUSER")
 	or die "Cannot connect: " . $DBI::errstr;
 
 # Run SQL to create the table
@@ -27,10 +31,10 @@ $dbh->do($sql);
 $basename = basename($gz_file, @suffixlist);
 $basename =~ s/\.xml(\.gz)?$//g;
 
-print "$gz_file\n"; 
+# print "$gz_file\n";
 open($fh, "<", $gz_file) or die;
 # Read in the compresszed file.
-# my $fh = new IO::Uncompress::Gunzip $gz_file 
+# my $fh = new IO::Uncompress::Gunzip $gz_file
 #      or die "IO::Uncompress::Gunzip failed: $GunzipError\n";
 
 # initialize the parser
@@ -45,7 +49,7 @@ close $fh;
 # I do the same in my code.
 foreach my $event ($doc->findnodes('/Event')) {
   my $type = $event->findvalue('./@eventTypeId');
-  my $last_update = $event->findvalue('./@lastUpdate'); 
+  my $last_update = $event->findvalue('./@lastUpdate');
 
   # Pull out key fields.
   my $city = $event->findnodes('./city');
@@ -54,16 +58,24 @@ foreach my $event ($doc->findnodes('/Event')) {
   my $desc = $event->findnodes('./eventTitle');
   my $date = $event->findnodes('./startDate');
   my $lines = $event->findnodes('./EventStory/Body');
-  
+
   $city =~ s/\n//;
   # Skip calls without tickers
-  if (!defined $ticker or $ticker =~ /^\s*$/) { next; } 
-  
+  if (!defined $date or $date =~ /^\s*$/) {
+      $date='NULL';
+      #next;
+  } else {
+      $date = "'$date'";
+  }
+
   # Remove leading spaces, multiple spaces and
-  # escape single quates 
+  # escape single quates
   $co_name =~ s/'/''/g;
   $co_name =~ s/^\s+//g;
   $co_name =~ s/\s+$//g;
+
+  $ticker =~ s/^\s+//g;
+  $ticker =~ s/\s+$//g;
 
   $desc =~ s/'/''/g;
   $desc =~ s/^\s+//g;
@@ -73,12 +85,14 @@ foreach my $event ($doc->findnodes('/Event')) {
   $city =~ s/^\s+//g;
   $city =~ s/\s+$//g;
 
+  $gz_file =~ s/$base_dir//;
+
   # Output results num_sentences
-  $sql = "INSERT INTO streetevents.calls_test 
+  $sql = "INSERT INTO streetevents.calls
             (file_path, file_name, ticker, co_name, call_desc, call_date,
              city, call_type, last_update ) ";
   $sql .= " VALUES ('$gz_file', '$basename', '$ticker', '$co_name', ";
-  $sql .= "'$desc', '$date', '$city', '$type', '$last_update')";
+  $sql .= "'$desc', $date, '$city', '$type', '$last_update')";
   # print "$sql\n";
   $dbh->do($sql);
 
