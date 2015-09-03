@@ -73,7 +73,7 @@ fix_table <- function(table_name) {
     pg <- dbConnect(PostgreSQL())
 
     dbGetQuery(pg, "DROP TABLE IF EXISTS streetevents.last_updates;")
-
+    dbGetInfo(pg, paste0("DELETE FROM streetevents.", table_name, " WHERE last_update IS NULL"))
     rs <- dbDisconnect(pg)
 }
 
