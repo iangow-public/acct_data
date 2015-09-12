@@ -10,7 +10,7 @@ use Env qw($PGDATABASE $PGUSER $PGHOST $EDGAR_DIR $WRDS_ID);
 
 # Extract options from the command line
 # Example ./get_wrds_data   .pl comp idx_index --fix-missing --wrds-id iangow
-# gets comp.idx_index from WRDS using WRDS ID iangow. It also converts 
+# gets comp.idx_index from WRDS using WRDS ID iangow. It also converts
 # special missing values (e.g., .Z) to regular missing values (i.e., .)
 #
 # In most cases, you will want to omit --fix-missing.
@@ -31,7 +31,7 @@ GetOptions('force' => \$force,
             'dbname=s' => \$dbname,
             'fix-cr' => \$fix_cr,
             'drop=s' => \$drop,
-            'obs=s' => \$obs); 
+            'obs=s' => \$obs);
 
 # Get schema and table name from command line. I have set my database
 # up so that these line up with the names of the WRDS library and data
@@ -61,15 +61,15 @@ my $sth = $dbh->prepare('
     or die "Couldn't prepare statement: " . $dbh->errstr;
 
 # Execute the query
-$sth->execute($table_name, $db_schema)             
+$sth->execute($table_name, $db_schema)
         or die "Couldn't execute statement: " . $sth->errstr;
 
-# Read the matching records and print them out          
+# Read the matching records and print them out
 @data = $sth->fetchrow_array();
 $comment = $data[0];
 
 $sth->finish;
-  
+
 $dbh->disconnect;
 
 ################################################
@@ -99,14 +99,14 @@ foreach (@result) {
         }
         $next_row = 0;
     }
-    
+
     if ($_ =~ /Last Modified/) {
         $_ =~ s/^Last Modified\s+(.*?)\s{2,}.*$/Last modified: $1/;
         chomp $_;
         $modified .= $_;
         $next_row = 1;
     }
-} 
+}
 
 $modfied =~ s/\s+$//;
 
@@ -114,7 +114,7 @@ $modfied =~ s/\s+$//;
 # 3. If updated table available, get from WRDS #
 ################################################
 if ($modified ne $comment || $force) {
-    $cmd = "./wrds_to_pg.pl $db_schema.$table_name"; 
+    $cmd = "./wrds_fetch.pl $db_schema.$table_name";
     $cmd .= ($fix_missing eq '' ? '' : ' --fix-missing');
     $cmd .= ($fix_cr eq '' ? '' : ' --fix-cr');
     $cmd .= ($obs eq '' ? '' : " --obs=$obs");
