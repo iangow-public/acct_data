@@ -9,26 +9,26 @@ equilar AS(
     SELECT trim(cusip) AS cusip,
         director.equilar_id(company_id) AS equilar_id, fy_end
     FROM director.co_fin),
-    
+
 permno_cusip AS (
     SELECT DISTINCT permno, ncusip AS cusip
     FROM crsp.stocknames),
-    
+
 -- CUSIP-CIK matches come from two sources:
 --  - Scraping 13/D and 13/G filings and
 --  - WRDS's Capital IQ database
 cusip_cik AS (
     SELECT substr(cusip, 1, 8) AS cusip, cik
-    FROM filings.cusip_cik 
+    FROM filings.cusip_cik
     WHERE char_length(trim(cusip))>=8
-    GROUP BY substr(cusip, 1, 8), cik 
+    GROUP BY substr(cusip, 1, 8), cik
     HAVING count(*) > 10
-    UNION 
+    UNION
     SELECT DISTINCT substr(cusip, 1, 8) AS cusip, cik::integer
     FROM ciq.wrds_cusip
     INNER JOIN ciq.wrds_cik
     USING (companyid)),
-    
+
 -- Get all CIKs that match each PERMNO, using CUSIPs as the link
 permno_ciks AS (
     SELECT DISTINCT permno, cik -- array_agg(cik) AS ciks
@@ -49,8 +49,8 @@ equilar_w_ciks AS (
     USING (permno)),
 
 proxy_filings AS (
-    SELECT cik::integer, 
-        extract(year FROM date_filed)::integer AS year, 
+    SELECT cik::integer,
+        extract(year FROM date_filed)::integer AS year,
         file_name, date_filed
     FROM filings.filings
     WHERE form_type ~ '^DEF 14'),
@@ -64,14 +64,20 @@ matched_proxies AS (
     WHERE date_filed > fy_end
     GROUP BY equilar_id, fy_end, a.cik),
 
+-- Only match the latest fy_end to prevent duplicates
+matched_proxies_filtered AS (
+    SELECT equilar_id, cik, date_filed, max(fy_end) AS fy_end
+    FROM matched_proxies
+    GROUP BY equilar_id, cik, date_filed),
+
 equilar_w_proxies AS (
     SELECT equilar_id, cusip, fy_end, b.cik,
         file_name, c.date_filed
     FROM equilar_w_ciks AS a
-    LEFT JOIN matched_proxies AS b
+    LEFT JOIN matched_proxies_filtered AS b
     USING (equilar_id, fy_end)
     LEFT JOIN proxy_filings AS c
     ON b.cik=c.cik AND b.date_filed=c.date_filed)
 
 SELECT *
-FROM equilar_w_proxies; 
+FROM equilar_w_proxies;
