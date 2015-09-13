@@ -14,3 +14,6 @@ The Bash script `update_audit.sh` runs the other code to update the schema `audi
 ```
 pg_dump --host localhost --username "igow" --format custom --no-tablespaces --verbose --file ~/Dropbox/pg_backup/audit.backup --schema "audit" "crsp"
 ```
+
+- Fix `get_feed09filing.R`: This could be done more with an updated version of `wrds_update.pl` that allowed the destination table to have a different name from the source table.
+

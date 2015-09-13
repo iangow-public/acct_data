@@ -14,7 +14,6 @@ convertToInteger <- function(vec) {
 get_iclink <- function() {
   
   sas_code <- "
-    libname home '~';
     
     %include \"/wrds/sample_programs/iclink.sas\";
           
@@ -30,7 +29,7 @@ get_iclink <- function() {
   # been transferred to the local computer (trial and error suggested this was
   # the most efficient approach).
   # -stdio means that SAS will take input from STDIN and output to STDOUT
-  sas_command <- paste("ssh -C iangow@wrds.wharton.upenn.edu ",
+  sas_command <- paste("ssh -C $WRDS_ID@wrds.wharton.upenn.edu ",
                        "'sas -stdio -noterminal; cat data.dta' > ",
                        temp_file)
   
@@ -60,4 +59,14 @@ rs <- dbWriteTable(pg, c("ibes", "iclink"), iclink, overwrite=TRUE, row.names=FA
 rs <- dbGetQuery(pg, "CREATE INDEX ON ibes.iclink (ticker)")
 
 rs <- dbDisconnect(pg)
-rs <- dbUnloadDriver(drv)
+
+pg_comment <- function(table, comment) {
+    library(RPostgreSQL)
+    pg <- dbConnect(PostgreSQL())
+    sql <- paste0("COMMENT ON TABLE ", table, " IS '",
+                  comment, " ON ", Sys.Date() , "'")
+    rs <- dbGetQuery(pg, sql)
+    dbDisconnect(pg)
+}
+
+pg_comment("ibes.iclink", "Created using ibes/get_iclink.R")

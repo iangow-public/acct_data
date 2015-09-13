@@ -2,6 +2,7 @@
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use Text::CSV_XS;
 use DBI;
+use Env qw($PGDATABASE $WRDS_ID $PGUSER);
 
 # Get schema and table name from command line. I have set my database
 # up so that these line up with the names of the WRDS library and data
@@ -14,11 +15,9 @@ $db = "$db_schema.";
   $db =~ s/^crsp/crspq/;
 #}
 
-# I call my database "crsp" (for legacy reasons)
-$dbname = "crsp";
-$wrds_id = "iangow";
-$pg_user = "igow";
-$pg_pass = "test";
+$dbname = $PGDATABASE;
+$wrds_id = $WRDS_ID;
+$pg_user = $PGUSER;
 
 # SAS code to extract information about the datatypes of the SAS data.
 # Note that there are some date formates that don't work with this code.

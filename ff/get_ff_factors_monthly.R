@@ -18,16 +18,17 @@ trim <- function(string) {
 ################################################################################
 
 # Download the data and unzip it
-ff.url <- paste(ff.url.partial, "F-F_Research_Data_Factors.zip", sep="/")
+ff.url <- paste(ff.url.partial, "F-F_Research_Data_Factors_TXT.zip", sep="/")
 f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f, list=TRUE)
-
+z <-unzip(f, files=as.character(file.list[1,1]))
 # Parse the data
 ff_monthly_factors <-
-    read.fwf(unzip(f, files=as.character(file.list[1,1])),
+    read.fwf(z,
              widths=c(4,2,8,8,8,8), header=FALSE,
              stringsAsFactors=FALSE, skip=4)
+unlink(z)
 last.line <- grep("Ann", ff_monthly_factors[,1])-2
 ff_monthly_factors <- ff_monthly_factors[1:last.line,]
 
@@ -44,19 +45,20 @@ for (i in 3:5) ff_monthly_factors[,i] <- ff_monthly_factors[,i]/100
 
 
 # Download the data and unzip it
-ff.url <- paste(ff.url.partial, "F-F_Momentum_Factor.zip", sep="/")
+ff.url <- paste(ff.url.partial, "F-F_Momentum_Factor_TXT.zip", sep="/")
 f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f, list=TRUE)
-
+z <- unzip(f, files=as.character(file.list[1,1]))
 # Parse the data
-temp <- readLines(unzip(f, files=as.character(file.list[1,1])))
+temp <- readLines(z)
+unlink(z)
 first.line <- grep("^Missing", temp)+3
 last.line <- grep("^Annual", temp)-2
-ff_mom_factor <-
-    read.fwf(unzip(f, files=as.character(file.list[1,1])),
-             widths=c(4,2,8), header=FALSE,
-             stringsAsFactors=FALSE, skip=first.line-1)
+z <- unzip(f, files=as.character(file.list[1,1]))
+ff_mom_factor <-read.fwf(z, widths=c(4,2,8), header=FALSE,
+                         stringsAsFactors=FALSE, skip=first.line-1)
+unlink(z)
 ff_mom_factor <- ff_mom_factor[1:(last.line-first.line+1),]
 
 # Clean the data
@@ -80,8 +82,7 @@ ff_monthly_factors <- subset(ff_monthly_factors, subset=!is.na(date))
 #                      Load the data into my database                          #
 ################################################################################ 
 library(RPostgreSQL)
-drv <- dbDriver("PostgreSQL")
-pg <- dbConnect(drv, dbname = "crsp")
+pg <- dbConnect(PostgreSQL())
 rs <- dbWriteTable(pg,c("ff","factors_monthly"), ff_monthly_factors, 
                    overwrite=TRUE, row.names=FALSE)
 

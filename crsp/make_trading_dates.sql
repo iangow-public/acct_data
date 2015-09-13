@@ -7,6 +7,7 @@ CREATE TABLE crsp.trading_dates AS
 SELECT date, rank() OVER (ORDER BY date) AS td
     FROM (SELECT DISTINCT DATE FROM crsp.dsi) AS a;
 
+CREATE INDEX ON crsp.trading_dates (date);
 CREATE INDEX trading_dates_td_idx ON crsp.trading_dates (td);
 CLUSTER crsp.trading_dates USING trading_dates_td_idx;
 ANALYZE crsp.trading_dates;
@@ -31,7 +32,6 @@ ORDER BY anncdate;
 CREATE INDEX anncdates_anncdate_idx ON crsp.anncdates (anncdate);
 -- CREATE INDEX ON crsp.anncdates (date);
 CLUSTER crsp.anncdates USING anncdates_anncdate_idx;
-
 ANALYZE crsp.anncdates;
 
 SELECT * FROM crsp.anncdates WHERE date IS NULL;

@@ -3,12 +3,13 @@
 ff.url.partial <- paste("http://mba.tuck.dartmouth.edu",
                         "pages/faculty/ken.french/ftp", sep="/")
 
-ff.url <- paste(ff.url.partial, "25_Portfolios_5x5.zip", sep="/")
+ff.url <- paste(ff.url.partial, "25_Portfolios_5x5_TXT.zip", sep="/")
 f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f, list=TRUE)
 
-raw.data <- readLines(as.character(file.list[1,1]))
+raw.data <- readLines(unzip(f, files=file.list[1,1]))
+unlist(file.list[1,1])
 
 read.fwd <- function(text, widths) {
   # Function mimicks read.fwf, but on a vector of strings
@@ -60,7 +61,7 @@ for (i in 2:(dim(ewret)[2])) {
 }
 
 # Rearrange and merge the data ----
-library(reshape)
+library(reshape2)
 
 ewret_alt <- melt(subset(ewret, !is.na(year)), id.vars="year")
 ewret_alt$me <- gsub("s([1-5]).*", "\\1", ewret_alt$variable )
@@ -80,9 +81,8 @@ ff25$me <- as.integer(ff25$me)
 
 # Put data into the database ----
 library(RPostgreSQL)
-drv <- dbDriver("PostgreSQL")
-pg <- dbConnect(drv, dbname = "crsp") # , port=5433, host="localhost")
-rs <- dbWriteTable(pg,c("ff","ff25"), ff25, 
+
+pg <- dbConnect(PostgreSQL()) 
+rs <- dbWriteTable(pg, c("ff", "ff25"), ff25, 
                    overwrite=TRUE, row.names=FALSE)
-rs <- dbGetQuery(pg, "ALTER TABLE ff.ff25 OWNER TO activism")
-# dbGetQuery(pg, "CREATE SCHEMA ff")
+rs <- dbDisconnect(pg)

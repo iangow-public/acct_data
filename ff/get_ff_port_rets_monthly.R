@@ -2,12 +2,13 @@
 # The URL for the data.
 ff.url.partial <- paste("http://mba.tuck.dartmouth.edu",
                         "pages/faculty/ken.french/ftp", sep="/")
-ff.url <- paste(ff.url.partial, "25_Portfolios_5x5.zip", sep="/")
+ff.url <- paste(ff.url.partial, "25_Portfolios_5x5_TXT.zip", sep="/")
 f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f) #, list=TRUE)
 
 raw.data <- readLines(as.character(file.list))
+unlink(file.list)
 
 read.fwd <- function(text, widths) {
   # Function mimicks read.fwf, but on a vector of strings

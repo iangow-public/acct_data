@@ -18,16 +18,17 @@ trim <- function(string) {
 ################################################################################
 
 # Download the data and unzip it
-ff.url <- paste(ff.url.partial, "F-F_Research_Data_Factors_daily.zip", sep="/")
+ff.url <- paste(ff.url.partial, "F-F_Research_Data_Factors_daily_TXT.zip", sep="/")
 f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f, list=TRUE)
-
+z <- unzip(f, files=as.character(file.list[1,1]))
 # Parse the data
 ff_daily_factors <-
-    read.fwf(unzip(f, files=as.character(file.list[1,1])),
+    read.fwf(z,
              widths=c(8,8,8,8,10), header=FALSE,
              stringsAsFactors=FALSE, skip=5)
+unlink(z)
 
 # Clean the data
 for (i in 2:5) ff_daily_factors[,i] <- as.numeric(trim(ff_daily_factors[,i]))
@@ -41,7 +42,7 @@ ff_daily_factors$date <- as.Date(ff_daily_factors$date, format="%Y%m%d")
 
 
 # Download the data and unzip it
-ff.url <- paste(ff.url.partial, "F-F_Momentum_Factor_daily.zip", sep="/")
+ff.url <- paste(ff.url.partial, "F-F_Momentum_Factor_daily_TXT.zip", sep="/")
 f <- tempfile()
 download.file(ff.url, f)
 file.list <- unzip(f, list=TRUE)
@@ -51,7 +52,7 @@ ff_mom_factor <-
     read.fwf(unzip(f, files=as.character(file.list[1,1])),
              widths=c(8,8), header=FALSE,
              stringsAsFactors=FALSE, skip=14)
-
+unlink(file.list[1,1])
 # Clean the data
 ff_mom_factor[,2] <- as.numeric(trim(ff_mom_factor[,2]))/100
 names(ff_mom_factor) <- c("date", "umd")
@@ -68,8 +69,7 @@ ff_daily_factors <- subset(ff_daily_factors, subset=!is.na(date))
 #                      Load the data into my database                          #
 ################################################################################ 
 library(RPostgreSQL)
-drv <- dbDriver("PostgreSQL")
-pg <- dbConnect(drv, dbname = "crsp")
+pg <- dbConnect(PostgreSQL())
 rs <- dbWriteTable(pg,c("ff","factors_daily"), ff_daily_factors, 
                    overwrite=TRUE, row.names=FALSE)
 

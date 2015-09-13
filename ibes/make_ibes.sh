@@ -1,17 +1,25 @@
-R CMD BATCH get_iclink.R
+#!/usr/bin/env bash
+Rscript ibes/get_iclink.R
 
-cd ..
-./wrds_to_pg_v2 ibes.statsum_epsus
-./wrds_to_pg_v2 ibes.act_epsus
-./wrds_to_pg_v2 ibes.actpsumu_epsus
-./wrds_to_pg_v2 ibes.actu_epsus
-./wrds_to_pg_v2 ibes.detu_epsus
-./wrds_to_pg_v2 ibes.id
-./wrds_to_pg_v2 ibes.idsum
-./wrds_to_pg_v2 ibes.statsum_epsus
-./wrds_to_pg_v2 ibes.statsumu_epsus
-./wrds_to_pg_v2 ibes.surpsum
+./wrds_update.pl ibes.statsum_epsus
+./wrds_update.pl ibes.act_epsus
+./wrds_update.pl ibes.actpsumu_epsus
+./wrds_update.pl ibes.actu_epsus
+./wrds_update.pl ibes.detu_epsus
+if [ $? -eq 1 ] ; then
+    psql -c "SET maintenance_work_mem='10GB'; CREATE INDEX ON ibes.detu_epsus (ticker, revdats)"
+fi
 
-cd ibes
-psql < index_ibes.sql
-pg_dump  --format custom --no-tablespaces --verbose --file ~/Dropbox/pg_backup/ibes.backup --schema "ibes" "crsp"
+./wrds_update.pl ibes.det_epsus
+./wrds_update.pl ibes.id
+./wrds_update.pl ibes.idsum
+./wrds_update.pl ibes.statsum_epsus
+./wrds_update.pl ibes.statsumu_epsus
+if [ $? -eq 1 ] ; then
+    psql -c "SET maintenance_work_mem='10GB'; CREATE INDEX ON ibes.statsumu_epsus (ticker, statpers)"
+fi
+
+./wrds_update.pl ibes.surpsum
+
+pg_dump  --format custom --no-tablespaces --verbose \
+    --file $PGBACKUP_DIR/ibes.backup --schema "ibes"

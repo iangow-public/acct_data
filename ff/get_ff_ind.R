@@ -23,9 +23,10 @@ trim <- function(string) {
 extract_ff_ind_data <- function (file) {
   
   # Read in the data in a plain form
-  ff_ind <- as.vector(read.delim(unzip(f, files=file), header=FALSE, 
+  z <- unzip(f, files=file)
+  ff_ind <- as.vector(read.delim(z, header=FALSE, 
                                  stringsAsFactors=FALSE))
-  
+  unlink(z)
   # The first 10 characters of each line are the industry data, but only the first
   # row of the data for the SIC codes in an industry are filled in;
   # so fill in the rest.
@@ -63,8 +64,7 @@ extract_ff_ind_data <- function (file) {
 
 # Load the data into my database
 library(RPostgreSQL)
-drv <- dbDriver("PostgreSQL")
-pg <- dbConnect(drv, dbname = "crsp")
+pg <- dbConnect(PostgreSQL())
 # Extract the data of interest
 for (i in c(12, 17, 48, 49)) {
   temp <- extract_ff_ind_data(paste0("Siccodes", i , ".txt"))
@@ -72,7 +72,8 @@ for (i in c(12, 17, 48, 49)) {
                      overwrite=TRUE, row.names=FALSE)
   
   rs <- dbGetQuery(pg, paste0("VACUUM ff.ind_", i))
-  
+  rs <- dbGetQuery(pg, paste0("CREATE INDEX ON ff.ind_", i,
+                              " (ind_num)"))
   sql <- paste0("
     COMMENT ON TABLE ff.ind_", i, " IS
     'CREATED USING get_ff_ind.R ON ", Sys.time() , "';")
