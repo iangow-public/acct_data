@@ -61,20 +61,18 @@ ff_mom_factor$date <- as.Date(ff_mom_factor$date, format="%Y%m%d")
 ################################################################################
 #                        Merge all the factor data                             #
 ################################################################################
-ff_daily_factors <- 
+ff_daily_factors <-
     merge(ff_daily_factors, ff_mom_factor, by="date", all.x=TRUE)
 ff_daily_factors <- subset(ff_daily_factors, subset=!is.na(date))
 
 ################################################################################
 #                      Load the data into my database                          #
-################################################################################ 
+################################################################################
 library(RPostgreSQL)
 pg <- dbConnect(PostgreSQL())
-rs <- dbWriteTable(pg,c("ff","factors_daily"), ff_daily_factors, 
+rs <- dbWriteTable(pg,c("ff","factors_daily"), ff_daily_factors,
                    overwrite=TRUE, row.names=FALSE)
 
-
-rs <- dbGetQuery(pg, "ALTER TABLE ff.factors_daily OWNER TO activism")
 sql <- paste0("
     COMMENT ON TABLE ff.factors_daily IS
     'CREATED USING get_ff_factors_daily.R ON ", Sys.time() , "';")

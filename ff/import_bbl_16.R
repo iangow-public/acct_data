@@ -5,7 +5,6 @@ library(RPostgreSQL)
 pg <- dbConnect(PostgreSQL())
 dbWriteTable(pg, c("ff", "bbl_16"), bbl_16, overwrite=TRUE, row.names=FALSE)
 
-rs <- dbGetQuery(pg, "ALTER TABLE ff.bbl_16 OWNER TO activism")
 sql <- paste0("
     COMMENT ON TABLE ff.bbl_16 IS
     'CREATED USING get_bbl_16.R ON ", Sys.time() , "';")

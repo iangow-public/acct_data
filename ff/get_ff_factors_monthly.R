@@ -73,21 +73,19 @@ ff_mom_factor$umd <- as.numeric(trim(ff_mom_factor$umd))/100
 ################################################################################
 #                        Merge all the factor data                             #
 ################################################################################
-ff_monthly_factors <- 
+ff_monthly_factors <-
     merge(ff_monthly_factors, subset(ff_mom_factor, select=-date),
           by=c("year", "month"), all.x=TRUE)
 ff_monthly_factors <- subset(ff_monthly_factors, subset=!is.na(date))
 
 ################################################################################
 #                      Load the data into my database                          #
-################################################################################ 
+################################################################################
 library(RPostgreSQL)
 pg <- dbConnect(PostgreSQL())
-rs <- dbWriteTable(pg,c("ff","factors_monthly"), ff_monthly_factors, 
+rs <- dbWriteTable(pg,c("ff","factors_monthly"), ff_monthly_factors,
                    overwrite=TRUE, row.names=FALSE)
 
-
-rs <- dbGetQuery(pg, "ALTER TABLE ff.factors_monthly OWNER TO activism")
 sql <- paste0("
     COMMENT ON TABLE ff.factors_monthly IS
     'CREATED USING get_ff_factors_monthly.R ON ", Sys.time() , "';")

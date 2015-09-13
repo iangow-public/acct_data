@@ -93,8 +93,6 @@ rs <- dbGetQuery(pg,"
         SET voterequirement=0.6667 WHERE voterequirement=66.67
 ")
 
-dbGetQuery(pg, "ALTER TABLE issvoting.compvote OWNER TO activism")
-
 dbGetQuery(pg, "VACUUM ANALYZE issvoting.compvote")
 
 dbGetQuery(pg, "CREATE INDEX ON issvoting.compvote (cusip)")

@@ -3,7 +3,7 @@ use DBI;
 use POSIX qw(strftime);
 
 $dbname = "crsp";
-my $dbh = DBI->connect("dbi:Pg:dbname=$dbname", 'igow')	
+my $dbh = DBI->connect("dbi:Pg:dbname=$dbname", 'igow')
 	or die "Cannot connect: " . $DBI::errstr;
 
 $sql = "
@@ -37,16 +37,16 @@ $dbh->do($sql);
 
 # Use PostgreSQL's COPY function to get data into the database
 for ($year = 2003; $year <= 2011; $year++) {
-  $time = localtime; 
+  $time = localtime;
   $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
   $filename = "/Users/igow/Dropbox/data/va/";
   $filename .= "ISSRec_VoteAnalysis" . $year . "_" . ($year+1) . ".zip";
-  printf "Beginning import of $filename at $now_string\n";  
+  printf "Beginning import of $filename at $now_string\n";
 
   # Note that some of the ISS files have empty lines at the end. This stops
   # PostgreSQL's COPY command dead. For some reason, I can't get sed to detect
   # these as empty lines. So, I simply insert \. into any last line that doesn't
-  # begin with a number. This \. is an EOF flag for COPY. 
+  # begin with a number. This \. is an EOF flag for COPY.
   $cmd  = " unzip -p \"$filename\"  | sed -E '\$ s/^[^0-9]/\\\\\\\./'  ";
   $cmd .=  "| psql -U igow ";
   $cmd .= "-d $dbname -c \"COPY issvoting.npx FROM STDIN CSV HEADER ";
@@ -55,11 +55,11 @@ for ($year = 2003; $year <= 2011; $year++) {
   print "Result of system command: $result\n";
 
   $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
-  printf "Completed import of $filename at $now_string\n"; 
+  printf "Completed import of $filename at $now_string\n";
 }
 
 # Fix permissions and set up indexes
-$sql = "ALTER TABLE issvoting.npx OWNER TO activism";
+sql = "GRANT SELECT ON issvoting.npx TO activism";
 $dbh->do($sql);
 
 $sql = "

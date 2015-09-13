@@ -50,9 +50,9 @@ $CODE$
         $temp =~  s/Elect\s+(.*)\sas Director/Elect Director \1/;
 
         # Look for forms like "Elect Ian D. Gow" (i.e., no words other than "elect" and the name
-        if (($temp =~ /^Elect(?! Director)/) && 
+        if (($temp =~ /^Elect(?! Director)/) &&
           !($temp =~ /\b(Auditors|Trust|Director|Company|Members|Inc\.|of|as|to)\b/)) {
-          $temp =~ s/Elect (.*)/Elect Director \1/; 
+          $temp =~ s/Elect (.*)/Elect Director \1/;
         }
 
         # Pull out text after "Elect director";
@@ -116,8 +116,6 @@ $CODE$
             last_name => $last_name, suffix => $suffix, prefix => $prefix };
 $CODE$ LANGUAGE plperl;
 
-ALTER FUNCTION issvoting.extract_name(text) OWNER TO activism;
-
 SET work_mem='3GB';
 
 DROP TABLE IF EXISTS issvoting.auto_names;
@@ -126,8 +124,6 @@ CREATE TABLE issvoting.auto_names AS
 SELECT DISTINCT itemdesc, issvoting.extract_name(itemdesc) AS name
 FROM issvoting.compvote
 WHERE itemdesc ~* '^\s*Elect';
-
-ALTER TABLE issvoting.auto_names OWNER TO activism;
 
 DROP TABLE IF EXISTS issvoting.director_names;
 
@@ -139,8 +135,6 @@ SELECT itemdesc, (name).prefix, (name).first_name, (name).middle_initial,
     (name).last_name, (name).suffix
 FROM issvoting.auto_names
 WHERE trim(itemdesc) NOT IN (SELECT itemdesc FROM issvoting.manual_names);
-
-ALTER TABLE issvoting.director_names OWNER TO activism;
 
 COMMENT ON TABLE issvoting.director_names IS
     'CREATED USING iss_extract_names.sql';

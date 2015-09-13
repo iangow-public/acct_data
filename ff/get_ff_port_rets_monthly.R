@@ -13,16 +13,16 @@ unlink(file.list)
 read.fwd <- function(text, widths) {
   # Function mimicks read.fwf, but on a vector of strings
   # rather than a file.
-  
+
   end.col <- cumsum(widths)
   start.col <- c(0, end.col[1:(length(end.col)-1)])+1
-  
+
   # Read substrings into columns
-  temp <- NULL 
+  temp <- NULL
   for (i in 1:length(widths)) {
     temp <- cbind(temp, substr(text, start.col[i], end.col[i]))
   }
-  
+
   # Return the resulting data frame
   return(data.frame(temp, stringsAsFactors=FALSE))
 }
@@ -84,9 +84,8 @@ ff25 <- ff25[order(ff25$year, ff25$month), ]
 library(RPostgreSQL)
 drv <- dbDriver("PostgreSQL")
 pg <- dbConnect(drv, dbname = "crsp") # , port=5433, host="localhost")
-rs <- dbWriteTable(pg,c("ff","ff25_mo"), ff25, 
+rs <- dbWriteTable(pg,c("ff","ff25_mo"), ff25,
                    overwrite=TRUE, row.names=FALSE)
-rs <- dbGetQuery(pg, "ALTER TABLE ff.ff25_mo OWNER TO activism")
 
 sql <- paste0("
     COMMENT ON TABLE ff.ff25_mo IS
