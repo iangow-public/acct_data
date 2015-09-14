@@ -36,9 +36,9 @@ dbGetQuery(pg, "
 
 dbDisconnect(pg)
 
-system('perl ./wrds_to_pg_v2.pl audit.feed09cat')
-system('perl ./wrds_to_pg_v2.pl audit.feed09tocat')
-system('perl ./wrds_to_pg_v2.pl audit.feed09period')
+system('perl ./wrds_update.pl audit.feed09cat')
+system('perl ./wrds_update.pl audit.feed09tocat')
+system('perl ./wrds_update.pl audit.feed09period')
 
 convertToInteger("audit.feed09cat", "res_category_fkey")
 convertToInteger("audit.feed09tocat", "res_notify_key")
