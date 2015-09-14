@@ -11,7 +11,8 @@ use POSIX qw(strftime);
 use XML::LibXML;
 use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
 use Lingua::Identify qw(:language_identification);
-use utf8; # does not enable Unicode output - it enables you to type Unicode in your program.
+use utf8; # does not enable Unicode output -
+          # it enables you to type Unicode in your program.
 use File::Basename;
 use HTML::Entities;
 use Time::localtime;
@@ -127,7 +128,7 @@ foreach my $event ($doc->findnodes('/Event')) {
   my $lines = decode_entities($event->findnodes('./EventStory/Body'));
 
   # Skip calls without tickers
-  if (!defined $ticker or $ticker =~ /^\s*$/) { next; }
+  # if (!defined $ticker or $ticker =~ /^\s*$/) { next; }
 
   $lines =~ s/\r\n/\n/g;
 
