@@ -1,4 +1,4 @@
-#!/usr/bin/env bash 
+#!/usr/bin/env bash
 psql -c "CREATE SCHEMA IF NOT EXISTS ff"
 
 Rscript ff/import_bbl_16.R
