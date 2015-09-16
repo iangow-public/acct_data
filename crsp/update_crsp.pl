@@ -4,7 +4,11 @@ use Env qw($PGBACKUP_DIR);
 
 # Update monthly data
 $msf = system("./wrds_update.pl crsp.msf --fix-missing");
+$msf = $msf >> 8;
+
 $msi = system("./wrds_update.pl crsp.msi");
+$msi = $msi >> 8;
+
 $msedelist = system("./wrds_update.pl crsp.msedelist --fix-missing");
 
 $mport = system("./wrds_update.pl crsp.mport1");
@@ -17,8 +21,6 @@ if ($mport) {
     system("psql -f crsp/crsp_make_ermport1.sql");
 }
 
-$msf = $msf >> 8;
-$msi = $msi >> 8;
 $msedelist = $msedelist >> 8;
 
 if ($msi) {
@@ -39,6 +41,7 @@ $dsf = system("./wrds_update.pl crsp.dsf --fix-missing");
 $dsf = $dsf >> 8;
 
 if ($dsf) {
+    system("psql -c 'ALTER TABLE crsp.dsf ALTER permno TYPE integer;'");
     system("psql -c 'SET maintenance_work_mem=\"10GB\"; CREATE INDEX ON crsp.dsf (permno, date)'");
 }
 
@@ -55,6 +58,7 @@ $dsedelist = system("./wrds_update.pl crsp.dsedelist --fix-missing");
 $dsedelist = $dsedelist >> 8;
 
 if ($dsedelist) {
+    system("psql -c 'ALTER TABLE crsp.dsedist ALTER permno TYPE integer;'");
     system("psql -c 'CREATE INDEX ON crsp.dsedelist (permno)'");
 }
 
@@ -62,22 +66,25 @@ $dport = system("./wrds_update.pl crsp.dport1");
 $dport = $dport >> 8;
 
 if ($dport) {
-    system("psql -f crsp/fix_d_permnos.sql");
     print "Getting erdport1\n";
     system("crsp/get_erdport.pl");
+    system("psql -c 'ALTER TABLE crsp.dport1 ALTER permno TYPE integer;'");
     system("psql -f crsp/crsp_make_erdport1.sql");
     system("psql -c 'CREATE INDEX ON crsp.dport1 (permno, date)'");
 }
 
 if ($dport | $dsf | $dsi | $dsedelist) {
     system("psql -f crsp/crsp_make_rets_alt.sql");
-    system("psql -f crsp/crsp_make_rets_alt_2.sql");
 }
 
 $ccmxpf_linktable = system("./wrds_update.pl crsp.ccmxpf_linktable --fix-missing");
 $ccmxpf_linktable = $ccmxpf_linktable >> 8;
 
 if ($ccmxpf_linktable) {
+    system("psql -c 'ALTER TABLE crsp.ccmxpf_linktable ALTER lpermno TYPE integer;'");
+    system("psql -c 'ALTER TABLE crsp.ccmxpf_linktable ALTER lpermco TYPE integer;'");
+    system("psql -c 'ALTER TABLE crsp.ccmxpf_linktable ALTER usedflag TYPE integer;'");
+    system("psql -c 'CREATE INDEX ON crsp.ccmxpf_linktable (lpermno)'");
     system("psql -c 'CREATE INDEX ON crsp.ccmxpf_linktable (lpermno)'");
     system("psql -c 'CREATE INDEX ON crsp.ccmxpf_linktable (gvkey)'");
 }
@@ -100,14 +107,15 @@ $stocknames = system("./wrds_update.pl crsp.stocknames");
 $stocknames = $stocknames >> 8;
 
 if ($stocknames) {
-    system("psql -c 'ALTER TABLE crsp.stocknames ALTER permno TYPE bigint'");
-    system("psql -c 'ALTER TABLE crsp.stocknames ALTER permco TYPE bigint'");
+    system("psql -c 'ALTER TABLE crsp.stocknames ALTER permno TYPE integer'");
+    system("psql -c 'ALTER TABLE crsp.stocknames ALTER permco TYPE integer'");
     system("psql -f crsp/crsp_fix_permnos.sql;");
 }
 
 $dseexchdates = system("./wrds_update.pl crsp.stocknames");
 $dseexchdates = $dseexchdates >> 8;
 if ($dseexchdates) {
+    system("psql -c 'ALTER TABLE crsp.dseexchdates ALTER permno TYPE integer;'");
     system("psql -c 'CREATE INDEX ON crsp.dseexchdates (permno)'");
 }
 
