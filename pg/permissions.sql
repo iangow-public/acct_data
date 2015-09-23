@@ -48,4 +48,12 @@ GRANT SELECT ON ALL TABLES IN SCHEMA streetevents TO personality_access;
 GRANT USAGE ON SCHEMA boardex TO personality_access;
 GRANT SELECT ON ALL TABLES IN SCHEMA boardex TO personality_access;
 
+--HBA
+GRANT USAGE ON SCHEMA streetevents TO crsp_plus;
+GRANT SELECT ON ALL TABLES IN SCHEMA streetevents TO crsp_plus;
+GRANT USAGE ON SCHEMA boardex TO crsp_plus;
+GRANT SELECT ON ALL TABLES IN SCHEMA boardex TO crsp_plus;
+
+
+
 
