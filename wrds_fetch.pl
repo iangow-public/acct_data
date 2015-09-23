@@ -226,7 +226,7 @@ if ($fix_missing | $drop ne '' | $obs ne '') {
       libname pwd '/sastemp6';
 
       * Fix missing values;
-      data pwd.$wrds_id;
+      data pwd.$wrds_id$pg_table;
           set $db$pg_table($drop_str $obs_str);
           $dsf_fix
 
@@ -239,7 +239,7 @@ if ($fix_missing | $drop ne '' | $obs ne '') {
           end;
       run;
 
-      proc export data=pwd.$wrds_id outfile=stdout dbms=csv;
+      proc export data=pwd.$wrds_id$pg_table outfile=stdout dbms=csv;
       run;";
 
 } else {
