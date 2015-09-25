@@ -1,5 +1,5 @@
 -- Create a table that integrates basic returns with delisting returns
-SET work_mem='5GB';
+SET work_mem='2GB';
 
 DROP TABLE IF EXISTS crsp.rets;
 
