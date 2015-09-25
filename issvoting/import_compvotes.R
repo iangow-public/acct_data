@@ -40,8 +40,7 @@ compvote$cusip <- trim(compvote$cusip)
 # company.votes <- read.dta("~/Dropbox/WRDS/corpgov/CompanyVoteResults_2001_2012.dta")
 # http://www.people.hbs.edu/protected/jzeitler/VA/201301/CompanyVoteResults_2001_2012_DTA.zip
 library(RPostgreSQL)
-drv <- dbDriver("PostgreSQL")
-pg <- dbConnect(drv, dbname = "crsp")
+pg <- dbConnect(PostgreSQL())
 rs <- dbWriteTable(pg, c("issvoting", "compvote"), compvote,
   row.names=FALSE, overwrite=TRUE)
 rs <- dbGetQuery(pg,"

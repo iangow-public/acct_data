@@ -82,8 +82,7 @@ ff25$me <- as.integer(ff25$me)
 ff25 <- ff25[order(ff25$year, ff25$month), ]
 # Put data into the database ----
 library(RPostgreSQL)
-drv <- dbDriver("PostgreSQL")
-pg <- dbConnect(drv, dbname = "crsp") # , port=5433, host="localhost")
+pg <- dbConnect(PostgreSQL())
 rs <- dbWriteTable(pg,c("ff","ff25_mo"), ff25,
                    overwrite=TRUE, row.names=FALSE)
 

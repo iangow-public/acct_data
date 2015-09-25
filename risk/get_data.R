@@ -70,8 +70,7 @@ fix_data <- function(df) {
 
 # Get data mapping issue codes to categories in Cunat et al. (JF, 2012)
 library(RPostgreSQL)
-drv <- dbDriver("PostgreSQL")
-pg <- dbConnect(drv, dbname = "crsp")
+pg <- dbConnect(PostgreSQL())
 
 require(RCurl)
 url <- paste("https://docs.google.com/spreadsheet/pub?",
@@ -95,8 +94,7 @@ fix_proposals <- function(df) {
 replicate <- function(libname, datatable) {
     temp <- get_data(libname, datatable)
     library(RPostgreSQL)
-    drv <- dbDriver("PostgreSQL")
-    pg <- dbConnect(drv, dbname = "crsp")
+    pg <- dbConnect(PostgreSQL())
 
     dbWriteTable(pg, c(libname, datatable), temp,
                  overwrite=TRUE, row.names=FALSE)
