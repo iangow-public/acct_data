@@ -8,16 +8,16 @@ showTypes <- function(df) {
 }
 
 convertDate <- function(vector) {
-    
+
     # Treat 'Current' as missing
     vector[vector=="Current"] <- NA
-    
+
     # Drop years; too far from being dates.
     vector[nchar(vector)==4] <- NA
-    
-    # Add day to partial dates    
+
+    # Add day to partial dates
     vector[nchar(vector) %in% c(7,8) ] <- paste("01", vector[nchar(vector) %in% c(7,8) ])
-                                                  
+
     as.Date(vector, format="%d %b %Y")
 }
 
@@ -27,7 +27,7 @@ convertShortDate <- function(vector) {
 
 # convertDate <- function(vector) {
 #     library("RcppBDT"); library("dplyr")
-#     ldply(as.Date(paste("1", vector), format="%d %b %Y"), .fun="getEndOfMonth", 
+#     ldply(as.Date(paste("1", vector), format="%d %b %Y"), .fun="getEndOfMonth",
 #           .parallel=TRUE)
 # }
 
@@ -46,7 +46,7 @@ fixVariables <- function(df) {
             df[, var] <-  convertDate(df[, var])
         }
     }
-    
+
     if (!is.null(percent.vars)) {
             for (var in percent.vars) {
             df[, var] <- convertPercentage(df[, var])
@@ -56,16 +56,16 @@ fixVariables <- function(df) {
 }
 
 addTableToDatabase <- function(df, table.name) {
-    
+
     library("RPostgreSQL")
     pg <- dbConnect(PostgreSQL())
-    # dbGetQuery(pg, "CREATE SCHEMA boardex_2014")
-    dbWriteTable(pg, c("boardex_2014", table.name), df, overwrite=TRUE, row.names=FALSE)
-    
+    # dbGetQuery(pg, "CREATE SCHEMA boardex")
+    dbWriteTable(pg, c("boardex", table.name), df, overwrite=TRUE, row.names=FALSE)
+
     for (var in short.date.vars) {
-        dbGetQuery(pg, paste0("UPDATE boardex_2014.", table.name,
+        dbGetQuery(pg, paste0("UPDATE boardex", table.name,
                               " SET ", var, " = eomonth(", var, ")" ))
-    }   
+    }
     dbDisconnect(pg)
 }
 
@@ -106,7 +106,7 @@ head(temp)
 
 # annual_report_date appears to be a short date
 # While incomplete, generally it is `safe' to convert to the end of the month
-percent.vars <- NULL 
+percent.vars <- NULL
 date.vars <- NULL
 short.date.vars <- c("annual_report_date")
 temp1 <- fixVariables(temp)
@@ -223,7 +223,7 @@ valid.end.dates <- temp$date_end_role!="Current" & !is.na(temp$date_end_role)
 temp$year_end_role[valid.end.dates] <- gsub(".*(\\d{4})$", "\\1", temp$date_end_role[valid.end.dates])
 
 valid.start.dates <- temp$date_start_role!="Current" & !is.na(temp$date_start_role)
-temp$year_start_role[valid.start.dates] <- 
+temp$year_start_role[valid.start.dates] <-
     gsub(".*(\\d{4})$", "\\1", temp$date_start_role[valid.start.dates])
 
 temp1 <- fixVariables(temp)
@@ -361,7 +361,7 @@ temp$year_end_role[valid.end.dates] <-
     gsub(".*(\\d{4})$", "\\1", temp$date_end_role[valid.end.dates])
 
 valid.start.dates <- temp$date_start_role!="Current" & !is.na(temp$date_start_role)
-temp$year_start_role[valid.start.dates] <- 
+temp$year_start_role[valid.start.dates] <-
     gsub(".*(\\d{4})$", "\\1", temp$date_start_role[valid.start.dates])
 
 temp1 <- fixVariables(temp)
@@ -391,7 +391,7 @@ temp$end_year[valid.end.dates] <-
     gsub(".*(\\d{4})$", "\\1", temp$end_date[valid.end.dates])
 
 valid.start.dates <- temp$start_date!="Current" & !is.na(temp$start_date)
-temp$start_year[valid.start.dates] <- 
+temp$start_year[valid.start.dates] <-
     gsub(".*(\\d{4})$", "\\1", temp$start_date[valid.start.dates])
 
 temp1 <- fixVariables(temp)
