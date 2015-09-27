@@ -71,3 +71,13 @@ library(parallel)
 system.time({
     res <- unlist(mclapply(file_list$file_path, parseFile, mc.cores=8))
 })
+
+# Add comment to reflect last update ----
+library(RPostgreSQL)
+pg <- dbConnect(PostgreSQL())
+last_update <- dbGetQuery(pg,
+    "SELECT max(last_update)::text FROM streetevents.calls")
+sql <- paste0("COMMENT ON TABLE streetevents.speaker_data IS '",
+              "Last update on ", last_update , "'")
+rs <- dbGetQuery(pg, sql)
+dbDisconnect(pg)

@@ -69,3 +69,15 @@ if (dim(new_files)[1]>0) {
 }
 
 rs <- dbDisconnect(pg)
+
+# Add comment to reflect last update ----
+library(RPostgreSQL)
+pg <- dbConnect(PostgreSQL())
+last_update <- dbGetQuery(pg,
+    "SELECT max(last_update)::text FROM streetevents.calls")
+sql <- paste0("COMMENT ON TABLE streetevents.call_files IS '",
+              "Last update on ", last_update , "'")
+rs <- dbGetQuery(pg, sql)
+dbDisconnect(pg)
+
+
