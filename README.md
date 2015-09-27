@@ -1,8 +1,8 @@
 Data for accounting research
 =========
+**UPDATE:** Code related to [WRDS](https://wrds-web.wharton.upenn.edu/wrds/) was moved to a [new repository](https://github.com/iangow/wrds_pg) on 27 September 2015.
 
 This repository contains code to pull together data from various sources including:
-- [WRDS](https://wrds-web.wharton.upenn.edu/wrds/)
 - [SEC EDGAR](http://www.sec.gov/edgar/searchedgar/webusers.htm)
 - Ken French's [website](http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html)
 - [Whalewisdom](whalewisdom/README.md)
