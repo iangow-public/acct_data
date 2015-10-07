@@ -1,10 +1,9 @@
 #!/usr/bin/env perl
 
 #######################################################################
-# This module goes through votes on the Voting Analytics database     #
-# and parses names of directors up for election into first names      #
-# and last names. This facilitates matching with data on the Equilar  #
-# director file.                                                      #
+# This module goes through directors in the BoardEx database          #
+# and parses names of directors  into first names and last names.     #
+#  This facilitates matching with data from other sources             #
 #######################################################################
 #use warnings "all"
 use DBI; # Database interface package
