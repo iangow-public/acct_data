@@ -62,6 +62,7 @@ director$insider_oustider_affiliate <- NULL
 names(co_fin) <- tolower(names(co_fin))
 names(co_fin) <- gsub("^c34$", "split_data", names(co_fin))
 co_fin$fy_end <- as.Date(co_fin$fy_end)
+co_fin$cusip <- trimws(co_fin$cusip)
 
 co_fin$shares_outstanding_date <- as.Date(co_fin$shares_outstanding_date)
 co_fin$total_shareholder_return_1_yr <- as.numeric(co_fin$total_shareholder_return_1_yr)
@@ -134,9 +135,9 @@ rs <- dbGetQuery(pg, "
     CREATE INDEX ON board.co_fin (company_id);
 ")
 
-sql <- paste(readLines("equilar/create_indexes.sql"), collapse="\n")
+sql <- paste(readLines("director/create_indexes.sql"), collapse="\n")
 rs <- dbGetQuery(pg, sql)
-sql <- paste(readLines("equilar/create_equilar_proxies.sql"), collapse="\n")
+sql <- paste(readLines("director/create_equilar_proxies.sql"), collapse="\n")
 rs <- dbGetQuery(pg, sql)
 
 sql <- "CREATE INDEX ON director.equilar_proxies (file_name)"
