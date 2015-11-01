@@ -49,7 +49,7 @@ cusip_matches AS (
 sec_names AS (
     SELECT DISTINCT upper(company_name) AS company_name, cik
     FROM filings.filings
-    WHERE form_type IN ('6-K', 'DEF 14A')),
+    WHERE form_type IN ('6-K', 'DEF 14A', '10-K')),
 
 name_matches AS (
     SELECT equilar_id, a.cusip, a.fy_end, c.cik::integer, year,
