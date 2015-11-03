@@ -51,11 +51,26 @@ with_boardex AS (
     WHERE b.directorid=c.directorid
         OR b.directorid IS NULL OR c.directorid IS NULL),
 
+match_using_boardex AS (
+    SELECT DISTINCT a.director_id, b.director_id AS matched_id,
+        directorid
+    FROM director.boardex_match AS a
+    INNER JOIN director.boardex_match AS b
+    USING (directorid)
+    WHERE a.director_id < b.director_id),
+
+both_matches AS (
+    SELECT director_id, matched_id, directorid
+    FROM with_boardex
+    UNION
+    SELECT director_id, matched_id, directorid
+    FROM match_using_boardex),
+
 connected_sets AS (
     SELECT
         director.get_connected(array_agg(director_id),
         array_agg(matched_id))::equilar_director_id[] AS matched_ids
-    FROM with_boardex),
+    FROM both_matches),
 
 unnested AS (
     SELECT unnest(matched_ids) AS director_id, matched_ids
@@ -63,7 +78,7 @@ unnested AS (
 
 SELECT director_id, matched_ids, directorid
 FROM unnested
-INNER JOIN with_boardex
+INNER JOIN both_matches
 USING (director_id);
 
 GRANT SELECT ON director.director_matches TO equilar_access;
