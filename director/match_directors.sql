@@ -13,7 +13,7 @@ $BODY$
     import networkx as nx
     G=nx.Graph()
     G.add_edges_from(pairs)
-    return sorted(nx.connected_components(G), key = len, reverse=True)
+    return sorted([list(s) for s in nx.connected_components(G)], key = len, reverse=True)
 
 $BODY$ LANGUAGE plpythonu;
 
