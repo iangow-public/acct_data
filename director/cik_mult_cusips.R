@@ -1,7 +1,7 @@
 sql <- paste(readLines("director/cik_mult_cusips.sql"), collapse="\n")
 
 library(dplyr)
-
+library(RPostgreSQL)
 pg <- src_postgres()
 rs <- dbGetQuery(pg$con, "SET work_mem='2GB'")
 dupes <- tbl(pg, sql(sql)) %>% collect() %>% as.data.frame()
