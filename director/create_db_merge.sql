@@ -28,23 +28,23 @@ firm_ids AS (
         fy_end, cusip, company
     FROM director.co_fin),
 
-companies AS (
-    SELECT equilar_id, array_agg(DISTINCT company) AS companies
+-- Merge it all.
+firm_matches AS (
+    SELECT DISTINCT equilar_id,
+        array_agg(DISTINCT cusip) AS cusips,
+        array_agg(DISTINCT cik) AS ciks,
+        array_agg(DISTINCT gvkey) AS gvkeys,
+        array_agg(DISTINCT company) AS companies
     FROM firm_ids
+    LEFT JOIN cusip_ciks
+    USING (cusip)
+    LEFT JOIN gvkey_cik
+    USING (cik)
     GROUP BY equilar_id)
 
--- Merge it all.
-SELECT DISTINCT equilar_id, fy_end, cusip,
-    array_agg(DISTINCT cik) AS ciks,
-    array_agg(DISTINCT gvkey) AS gvkeys,
-    companies
-FROM firm_ids
-LEFT JOIN cusip_ciks
-USING (cusip)
-LEFT JOIN gvkey_cik
-USING (cik)
-INNER JOIN companies
-USING (equilar_id)
-GROUP BY equilar_id, fy_end, cusip, companies;
+SELECT a.*, b.fy_end
+FROM firm_matches AS a
+INNER JOIN firm_ids AS b
+USING (equilar_id);
 
 GRANT SELECT ON director.db_merge TO equilar_access;
