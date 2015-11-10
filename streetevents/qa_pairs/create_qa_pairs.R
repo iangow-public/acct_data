@@ -2,6 +2,16 @@ library("RPostgreSQL")
 
 pg <- dbConnect(PostgreSQL())
 
+dbSendQuery(pg, "CREATE LANGUAGE plpythonu")
+rs <- dbSendQuery(pg, "
+    CREATE OR REPLACE FUNCTION array_min(an_array integer[])
+        RETURNS integer AS
+    $BODY$
+        if an_array is None:
+            return None
+        return min(an_array)
+    $BODY$ LANGUAGE plpythonu")
+
 if (!dbExistsTable(pg, c("streetevents", "qa_pairs"))) {
     dbGetQuery(pg, "
         DROP TABLE IF EXISTS streetevents.qa_pairs;
