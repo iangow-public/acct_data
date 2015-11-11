@@ -12,19 +12,20 @@ gvkey_cik AS (
     INNER JOIN ciq.wrds_cik
     USING (companyid)),
 
--- This is the list of other_director_ids we have.
-firm_ids AS (
-    SELECT DISTINCT equilar_id, fy_end, cusip, company, cik
-    FROM director.ciks),
+companies AS (
+    SELECT DISTINCT director.equilar_id(company_id),
+        company
+    FROM director.co_fin)
 
 -- Merge it all.
 SELECT DISTINCT equilar_id, fy_end, cusip, cik,
     array_agg(DISTINCT gvkey) AS gvkeys,
     array_agg(DISTINCT company) AS companies
 FROM director.ciks AS a
-USING (equilar_id, fy_end)
+INNER JOIN companies
+USING (equilar_id)
 LEFT JOIN gvkey_cik
 USING (cik)
-GROUP BY equilar_id, fy_end, a.cusip);
+GROUP BY equilar_id, fy_end, cusip, a.cik;
 
 GRANT SELECT ON director.db_merge TO equilar_access;
