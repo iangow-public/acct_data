@@ -2,7 +2,7 @@ library("RPostgreSQL")
 
 pg <- dbConnect(PostgreSQL())
 
-dbSendQuery(pg, "CREATE LANGUAGE plpythonu")
+# dbSendQuery(pg, "CREATE LANGUAGE plpythonu")
 rs <- dbSendQuery(pg, "
     CREATE OR REPLACE FUNCTION array_min(an_array integer[])
         RETURNS integer AS
