@@ -20,23 +20,25 @@ crsp_tickers <-
 # Match Equilar to CRSP permcos where possible ----
 director_ciks <- tbl(pg, sql("
     SELECT *
-    FROM director.ciks")) %>%
-    select(equilar_id, cusip, cik) %>%
-    distinct()
+    FROM director.company_ids")) %>%
+    select(equilar_id, cik) %>%
+    distinct() %>%
+    collect()
 
 co_fin <- tbl(pg, sql("
     SELECT director.equilar_id(company_id),
         substring(cusip from 1 for 8) AS cusip8, *
     FROM director.co_fin")) %>%
     rename(cusip_original=cusip) %>%
-    rename(cusip=cusip8)
+    rename(cusip=cusip8) %>%
+    collect()
 
 director_cusip <-
     co_fin %>%
     inner_join(crsp_cusips) %>%
     select(equilar_id, cusip, permco) %>%
     distinct() %>%
-    mutate(match_type=sql("'cusip'::text"))
+    mutate(match_type=sql("'supplied'::text"))
 
 director_ticker <-
     co_fin %>%

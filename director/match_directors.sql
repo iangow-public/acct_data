@@ -1,4 +1,4 @@
-SET work_mem='5GB';
+SET work_mem='10GB';
 
 -- CREATE TYPE equilar_director_id AS (equilar_id integer, director_id integer);
 
@@ -26,24 +26,19 @@ WITH
 
 -- Get data on directors from Equilar table
 raw_data AS (
-    SELECT (director.equilar_id(director_id),
-            director.director_id(director_id))::equilar_director_id AS director_id,
-        (director.parse_name(director)).*,
-        fileyear, director, company, fy_end, age, gender
-    FROM director.director),
+    SELECT DISTINCT (equilar_id,director_id)::equilar_director_id AS director_id,
+        executive_id
+    FROM director.director_ids
+    -- WHERE executive_id=593849
+),
 
--- Match *across* firms within fileyear using gender and age (within one year)
-match_within_year AS (
-    SELECT DISTINCT a.director_id, b.director_id AS matched_id
+
+-- Match using Equilar's executive_id field
+equilar_match AS (
+    SELECT DISTINCT a.director_id, b.director_id AS matched_id, executive_id
     FROM raw_data AS a
     INNER JOIN raw_data AS b
-    ON a.last_name=b.last_name
-    AND a.first_name=b.first_name AND abs(a.age - b.age) <= 1
-        AND a.fileyear=b.fileyear
-        AND a.gender=b.gender
-        AND ((b.director_id).equilar_id > (a.director_id).equilar_id OR
-        ((b.director_id).equilar_id = (a.director_id).equilar_id AND
-         (b.director_id).equilar_id > (a.director_id).equilar_id))),
+    USING (executive_id)),
 
 -- Get BoardEx directorid data
 boardex_match AS (
@@ -56,36 +51,51 @@ other_boardex_match AS (
     FROM director.boardex_match),
 
 -- Merge in BoardEx IDs where available.
+-- Keep observations if an apparent match is associated with two different BoardEx IDs
+problematic_exec_ids AS (
+    SELECT DISTINCT executive_id
+    FROM equilar_match AS a
+    LEFT JOIN boardex_match AS b
+    USING (director_id)
+    LEFT JOIN other_boardex_match AS c
+    USING (matched_id)
+    WHERE b.directorid !=c.matched_directorid),
+
+-- Merge in BoardEx IDs where available.
 -- If an apparent match is associated with two different BoardEx IDs, then
--- it will be dropped at this point
+-- it will be dropped at this point.
 with_boardex AS (
-    SELECT a.director_id, a.matched_id,
+    SELECT a.director_id, a.matched_id, a.executive_id,
         COALESCE(b.directorid, c.matched_directorid) AS directorid
-    FROM match_within_year AS a
+    FROM equilar_match AS a
     LEFT JOIN boardex_match AS b
     USING (director_id)
     LEFT JOIN other_boardex_match AS c
     USING (matched_id)
     WHERE b.directorid=c.matched_directorid
-        OR b.directorid IS NULL OR c.matched_directorid IS NULL),
+        OR ((b.directorid IS NULL OR c.matched_id IS NULL) AND
+             a.executive_id NOT IN (SELECT executive_id FROM problematic_exec_ids))),
 
--- Matches so far are within fileyear. But BoardEx IDs may allow additional
+-- Matches so far done by Equilar. But BoardEx IDs may allow additional
 -- matches, which are created here.
 match_using_boardex AS (
     SELECT a.director_id, b.director_id AS matched_id,
         directorid
-    FROM director.boardex_match AS a
+    FROM raw_data
+    INNER JOIN director.boardex_match AS a
+    USING (director_id)
     INNER JOIN director.boardex_match AS b
     USING (directorid)
     WHERE a.director_id < b.director_id),
 
 -- Combine matches. (Only distinct rows are retained due to use of UNION.)
 both_matches AS (
-    SELECT director_id, matched_id, directorid
+    SELECT DISTINCT director_id, matched_id, directorid
     FROM with_boardex
     UNION
     SELECT director_id, matched_id, directorid
-    FROM match_using_boardex),
+    FROM match_using_boardex
+),
 
 -- Use networkx to make connected sets
 connected_sets AS (
@@ -99,23 +109,48 @@ connected_sets AS (
 -- integers). This step adds a column with values of every director_id
 -- in the connected sets.
 unnested AS (
-    SELECT unnest(matched_ids) AS director_id, matched_ids
+    SELECT DISTINCT unnest(matched_ids) AS director_id, matched_ids
     FROM connected_sets),
 
--- Many director_id values will have no matches.
-unmatched AS (
-    SELECT director_id, NULL::equilar_director_id[] AS matched_ids, directorid
-    FROM boardex_match
-    WHERE director_id NOT IN (
-        SELECT director_id
-        FROM unnested))
+-- Now bring in directorid matches where available and line them
+-- up with the connected sets.
+directorids AS (
+    SELECT director_id, directorid, matched_ids
+    FROM both_matches
+    INNER JOIN unnested
+    USING (director_id)
+    WHERE directorid IS NOT NULL),
 
-SELECT director_id, matched_ids, directorid
-FROM unnested
+-- Aggregate the directorids using the matches we have
+directorids_array AS (
+    SELECT matched_ids, array_agg(DISTINCT directorid) AS directorids
+    FROM directorids
+    GROUP BY matched_ids),
+
+-- Now bring in executive_id matches where available and line them
+-- up with the connected sets.
+executive_ids AS (
+    SELECT DISTINCT director_id, executive_id, matched_ids
+    FROM raw_data
+    INNER JOIN unnested
+    USING (director_id)
+    WHERE executive_id IS NOT NULL),
+
+-- Aggregate the executive_ids using the matches we have
+executive_ids_array AS (
+    SELECT DISTINCT matched_ids, array_agg(DISTINCT executive_id) AS executive_ids
+    FROM executive_ids
+    GROUP BY matched_ids)
+
+SELECT DISTINCT a.director_id, matched_ids, UNNEST(directorids) AS directorid, executive_ids
+FROM raw_data AS a
+LEFT JOIN unnested
+USING (director_id)
 INNER JOIN both_matches
 USING (director_id)
-UNION
-SELECT director_id, matched_ids, directorid
-FROM unmatched;
+INNER JOIN executive_ids_array
+USING (matched_ids)
+INNER JOIN directorids_array
+USING (matched_ids);
 
 GRANT SELECT ON director.director_matches TO equilar_access;
