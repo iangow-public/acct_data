@@ -32,7 +32,6 @@ raw_data AS (
     -- WHERE executive_id=593849
 ),
 
-
 -- Match using Equilar's executive_id field
 equilar_match AS (
     SELECT DISTINCT a.director_id, b.director_id AS matched_id, executive_id
