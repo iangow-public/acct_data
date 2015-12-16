@@ -5,10 +5,26 @@ DROP TABLE IF EXISTS director.equilar_proxies;
 CREATE TABLE director.equilar_proxies AS
 WITH
 
+ciq_ids AS (
+    SELECT companyid, cik::integer, startdate, enddate
+    FROM ciq.wrds_cik),
+
 proxy_filings AS (
-    SELECT cik::integer, file_name, date_filed
-    FROM filings.filings
+    SELECT a.cik::integer, file_name, date_filed, companyid
+    FROM filings.filings AS a
+    LEFT JOIN ciq_ids AS b
+    ON a.cik::integer=b.cik
+        AND (a.date_filed <= b.enddate OR b.enddate IS NULL)
+        AND (a.date_filed >= b.startdate OR b.startdate IS NULL)
     WHERE form_type ~ '^DEF 14'),
+
+proxy_filings_gvkey AS (
+    SELECT a.*, b.gvkey
+    FROM proxy_filings AS a
+    LEFT JOIN ciq.wrds_gvkey AS b
+    ON a.companyid=b.companyid
+        AND (a.date_filed <= b.enddate OR b.enddate IS NULL)
+        AND (a.date_filed >= b.startdate OR b.startdate IS NULL)),
 
 -- Get the first proxy after the fy_end
 matched_proxies AS (
@@ -27,9 +43,9 @@ matched_fyears AS (
     GROUP BY equilar_id, cik, date_filed)
 
 SELECT equilar_id, cusip, fy_end, cik,
-    file_name, date_filed
+    file_name, date_filed, gvkey
 FROM director.ciks AS a
 LEFT JOIN matched_fyears AS b
 USING (equilar_id, cik, fy_end)
-LEFT JOIN proxy_filings AS c
-USING (cik, date_filed)
+LEFT JOIN proxy_filings_gvkey AS c
+USING (cik, date_filed);
