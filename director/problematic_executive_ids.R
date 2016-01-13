@@ -29,7 +29,6 @@ problem_cases %>%
     as.data.frame() %>%
     write_csv("~/Google Drive/director_bio/problematic_executive_ids.csv")
 
-
 director_matches <- tbl(pg, sql("
      SELECT director_id::text, directorid, executive_ids::text
      FROM director.director_matches"))
