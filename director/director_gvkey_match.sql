@@ -3,7 +3,7 @@ SET work_mem='2GB';
 DROP TABLE IF EXISTS director.director_gvkeys;
 
 CREATE TABLE director.director_gvkeys AS
-WITH 
+WITH
 
 director AS (
     SELECT (director.equilar_id(director_id),
@@ -16,7 +16,7 @@ director_w_ciks AS (
     FROM director
     INNER JOIN director.company_ids
     USING (equilar_id)),
-    
+
 term_dates AS (
     SELECT director_id,
         start_date,
@@ -40,9 +40,9 @@ director_w_dates AS (
     FROM director_w_ciks
     INNER JOIN term_dates
     USING (director_id)
-    WHERE fy_end >= start_date 
-        AND (fy_end <= end_date OR end_date IS NULL)
-    UNION 
+    WHERE fy_end >= start_date
+        AND (fy_end < end_date OR end_date IS NULL)
+    UNION
     SELECT director_id, cik, end_date AS test_date,
         'end_date'::text AS test_date_type
     FROM director_w_ciks
