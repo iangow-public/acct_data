@@ -59,7 +59,7 @@ add_companyid AS (
     ON a.cik=b.cik)
 
 SELECT a.*, b.gvkey,
-    COALESCE(valid_date_cik AND (a.test_date <= b.enddate OR b.enddate IS NULL)
+    COALESCE(valid_date_cik AND (a.test_date < b.enddate OR b.enddate IS NULL)
         AND (a.test_date >= b.startdate OR b.startdate IS NULL), FALSE)
         AS valid_date
 FROM add_companyid AS a
