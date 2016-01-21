@@ -5,11 +5,10 @@ use POSIX qw(strftime);
 $dbname = "crsp";
 $user = "igow";
 
-my $dbh = DBI->connect("dbi:Pg:dbname=$dbname", $user)    
+my $dbh = DBI->connect("dbi:Pg:dbname=$dbname", $user)
     or die "Cannot connect: " . $DBI::errstr;
 
 $sql = "
-    
     CREATE SCHEMA IF NOT EXISTS whalewisdom;
     DROP TABLE IF EXISTS whalewisdom.quarters CASCADE;
     DROP TABLE IF EXISTS whalewisdom.other_managers CASCADE;
@@ -48,7 +47,7 @@ $sql = "
     market_value double precision,
     shares int8,
     security_type text,
-    manager_number text 
+    manager_number text
 );
 
 CREATE TABLE whalewisdom.filers
@@ -94,31 +93,31 @@ CREATE TABLE whalewisdom.stocks
     sector text,
     industry text,
     PRIMARY KEY(stock_id)
-);    
+);
 
 ";
 
 # Run SQL to create the table
 $dbh->do($sql);
-$filename = "~/Dropbox/data/whalewisdom/whalewisdom_raw_snapshot_2015-4-28.tgz";
+$filename = "~/Dropbox/data/whalewisdom/whalewisdom_2016-1-7-raw.tgz";
 # Use PostgreSQL's COPY function to get data into the database
 foreach $item ("quarters", "other_managers", "filers", "stocks", "filings", "filing_stock_records")
 {
-    $time = localtime; 
+    $time = localtime;
     $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
     # $filename = "" .$item . ".csv";
-    
-    printf "Beginning import of $item at $now_string\n";    
- 
+
+    printf "Beginning import of $item at $now_string\n";
+
     # Pipe unzipped file ...
     $cmd    = " tar -xf $filename --include=$item.csv --to-stdout";
 
     # Get rid of double quotes
     $cmd .= "| sed 's/\"\"//g'";
-    
+
     # Get rid of strange values
     $cmd .= "| sed 's/99999999999999999999//'";
-    
+
     # Delete empty lines
     $cmd .= "| sed '/^\\s*\$/d' ";
 
@@ -136,7 +135,7 @@ foreach $item ("quarters", "other_managers", "filers", "stocks", "filings", "fil
 
     $dbh->do($sql);
 
-    printf "Completed import of $item.csv at $now_string\n"; 
+    printf "Completed import of $item.csv at $now_string\n";
 }
 
 # Fix permissions and set up indexes
@@ -148,10 +147,10 @@ $sql = "
 $dbh->do($sql);
 
 $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
-printf "Completed making indexes at $now_string\n"; 
+printf "Completed making indexes at $now_string\n";
 
 
-# Fix erroneous filings (these duplicate other filings and 
+# Fix erroneous filings (these duplicate other filings and
 # appear to be under the wrong SEC file number).
 # One filing is
 # http://www.sec.gov/Archives/edgar/data/1319943/000090445408000057/0000904454-08-000057.txt
@@ -161,7 +160,7 @@ printf "Completed making indexes at $now_string\n";
 # Similarly,
 # http://www.sec.gov/Archives/edgar/data/1129787/000112978707000084/0001129787-07-000084.txt
 # seems to be a duplicate of
-# http://www.sec.gov/Archives/edgar/data/1351069/000141881208000076/0001418812-08-000076.txt 
+# http://www.sec.gov/Archives/edgar/data/1351069/000141881208000076/0001418812-08-000076.txt
 $sql = "
     DELETE FROM whalewisdom.filings
     WHERE filing_id IN (10793, 13337);";
