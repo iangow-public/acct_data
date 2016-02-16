@@ -7,21 +7,22 @@ showTypes <- function(df) {
     for (var in names(df)) cat(var, ":\t", class(df[, var]), "\n")
 }
 
-convertDate <- function(vector) {
+convertDate <- function(vec) {
 
-    vector <- as.character(vector)
+    vec <- as.data.frame(vec)
+    vec <- vec[,1, drop = TRUE]
 
     # Treat 'Current' as missing
-    vector[vector=="Current"] <- NA
+    vec[vec=="Current"] <- NA
 
     # Drop years; too far from being dates.
-    vector[nchar(vector)==4] <- NA
+    vec[nchar(vec)==4] <- NA
 
     # Add day to partial dates
-    vector[nchar(vector) %in% c(7,8) ] <-
-        paste("01", vector[nchar(vector) %in% c(7,8) ])
+    vec[nchar(vec) %in% c(7,8) ] <-
+        paste("01", vec[nchar(vec) %in% c(7,8) ])
 
-    as.Date(vector, format="%d %b %Y")
+    as.Date(vec, format="%d %b %Y")
 }
 
 convertShortDate <- function(vector) {
@@ -82,9 +83,8 @@ file_list <- sort(list.files(file.path(Sys.getenv("EDGAR_DIR"), "boardex"),
 # Table 1: board_and_director_announcements ----
 file <- file_list[grepl("Board and Director Announcements", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "", tolower(basename(file))))
-Sys.setlocale("LC_ALL", "C")
-
+table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
+                                     tolower(basename(file))))
 library(readr)
 temp <- read_delim(file, na=c("", "n.a."), delim="|")
 
@@ -104,7 +104,8 @@ addTableToDatabase(temp1, table.name)
 # Table 2: board_and_director_committees ----
 file <- file_list[grepl("Board and Director Committees", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "", tolower(basename(file))))
+table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
+                                     tolower(basename(file))))
 table.name
 
 temp <- read_delim(file, na=c("", "n.a."), delim="|")
@@ -124,7 +125,8 @@ addTableToDatabase(temp1, table.name)
 # Table 3: board_characteristics ----
 file <- file_list[grepl("Board Characteristics", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "", tolower(basename(file))))
+table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
+                                     tolower(basename(file))))
 temp <- read_delim(file, na=c("", "n.a."), delim="|")
 names(temp) <- fixNames(names(temp))
 showTypes(temp)
@@ -143,7 +145,8 @@ addTableToDatabase(temp1, table.name)
 # Table 4: company_profile_advisors ----
 file <- file_list[grepl("Company Profile Advisors", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "", tolower(basename(file))))
+table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
+                                     tolower(basename(file))))
 
 # Copy and paste table.name output to "Table: ..." line above
 table.name
@@ -168,7 +171,8 @@ percent.vars <- NULL
 date.vars <- NULL
 short.date.vars <- NULL
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "", tolower(basename(file))))
+table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
+                                     tolower(basename(file))))
 
 # Copy and paste table.name output to "Table: ..." line above
 table.name
@@ -184,7 +188,8 @@ addTableToDatabase(temp1, table.name)
 # Table 6: company_profile_market_cap ----
 file <- file_list[grepl("Company Profile Market Cap", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "", tolower(basename(file))))
+table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
+                                     tolower(basename(file))))
 
 # Copy and paste table.name output to "Table: ..." line above
 table.name
@@ -205,7 +210,8 @@ addTableToDatabase(temp1, table.name)
 # Table 7: company_profile_senior_managers ----
 file <- file_list[grepl("Company Profile Senior Managers", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "", tolower(basename(file))))
+table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
+                                     tolower(basename(file))))
 
 # Copy and paste table.name output to "Table: ..." line above
 table.name
@@ -233,7 +239,8 @@ addTableToDatabase(temp1, table.name)
 # Table 8: company_profile_stocks ----
 file <- file_list[grepl("Company Profile Stocks", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "", tolower(basename(file))))
+table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
+                                     tolower(basename(file))))
 
 # Copy and paste table.name output to "Table: ..." line above
 table.name
@@ -254,7 +261,8 @@ addTableToDatabase(temp1, table.name)
 # Table 9: director_characteristics ----
 file <- file_list[grepl("Director Characteristics", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "", tolower(basename(file))))
+table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
+                                     tolower(basename(file))))
 
 # Copy and paste table.name output to "Table: ..." line above
 table.name
@@ -275,7 +283,8 @@ addTableToDatabase(temp1, table.name)
 # Table 10: director_profile_achievements ----
 file <- file_list[grepl("Director Profile Achievements", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "", tolower(basename(file))))
+table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
+                                     tolower(basename(file))))
 
 # Copy and paste table.name output to "Table: ..." line above
 table.name
