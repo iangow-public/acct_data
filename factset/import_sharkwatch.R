@@ -4,11 +4,8 @@
 # Read in the data
 library(XML)
 
-tablename = "sharkwatch"
 tablename = "sharkwatch_new"
-filename = "sharkwatch_2013-02-06.xls"
-filename = "sharkwatch_2014-02-22.xls"
-filename = "sharkwatch_2014-09-15.xls"
+filename = "sharkwatch_2016-03-02.xls"
 tables = readHTMLTable(file.path("~/Dropbox/data/factset", filename),
                        header=TRUE, stringsAsFactors=FALSE)
 sharkwatch=tables[[1]]
