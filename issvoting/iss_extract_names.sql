@@ -1,26 +1,12 @@
--- DROP TYPE IF EXISTS parsed_name CASCADE;
---
- CREATE TYPE parsed_name AS
-    (prefix text,
-    first_name text,
-     middle_initial text,
-     last_name text,
-     suffix text);
---
--- ALTER TYPE parsed_name OWNER TO personality_access;
-
-DROP FUNCTION IF EXISTS issvoting.extract_name(text);
-
-CREATE OR REPLACE FUNCTION issvoting.extract_name(text)
-RETURNS parsed_name AS
-$CODE$
-    use utf8;
-    $first_name="";
-    $last_name="";
-    $name = "";
-    $prefix = "";
-    $last_name_suffix = "";
-    $suffix = "";
+ CREATE OR REPLACE FUNCTION issvoting.extract_name(text)
+  RETURNS parsed_name AS
+$BODY$
+    my $first_name="";
+    my $last_name="";
+    my $name = "";
+    my $prefix = "";
+    my $last_name_suffix = "";
+    my $suffix = "";
 
     if (defined($_[0])) {
 
@@ -50,9 +36,9 @@ $CODE$
         $temp =~  s/Elect\s+(.*)\sas Director/Elect Director \1/;
 
         # Look for forms like "Elect Ian D. Gow" (i.e., no words other than "elect" and the name
-        if (($temp =~ /^Elect(?! Director)/) &&
+        if (($temp =~ /^Elect(?! Director)/) && 
           !($temp =~ /\b(Auditors|Trust|Director|Company|Members|Inc\.|of|as|to)\b/)) {
-          $temp =~ s/Elect (.*)/Elect Director \1/;
+          $temp =~ s/Elect (.*)/Elect Director \1/; 
         }
 
         # Pull out text after "Elect director";
@@ -114,29 +100,6 @@ $CODE$
 
     return {first_name => $first_name, middle_initial => $middle_initial,
             last_name => $last_name, suffix => $suffix, prefix => $prefix };
-$CODE$ LANGUAGE plperl;
-
-SET work_mem='3GB';
-
-DROP TABLE IF EXISTS issvoting.auto_names;
-
-CREATE TABLE issvoting.auto_names AS
-SELECT DISTINCT itemdesc, issvoting.extract_name(itemdesc) AS name
-FROM issvoting.compvote
-WHERE itemdesc ~* '^\s*Elect';
-
-DROP TABLE IF EXISTS issvoting.director_names;
-
-CREATE TABLE issvoting.director_names AS
-SELECT itemdesc, prefix, first_name, middle_initial, last_name, suffix
-FROM issvoting.manual_names
-UNION
-SELECT itemdesc, (name).prefix, (name).first_name, (name).middle_initial,
-    (name).last_name, (name).suffix
-FROM issvoting.auto_names
-WHERE trim(itemdesc) NOT IN (SELECT itemdesc FROM issvoting.manual_names);
-
-COMMENT ON TABLE issvoting.director_names IS
-    'CREATED USING iss_extract_names.sql';
-
-DROP TABLE IF EXISTS issvoting.auto_names;
+$BODY$
+  LANGUAGE plperl VOLATILE
+  COST 100;
