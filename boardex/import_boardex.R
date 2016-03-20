@@ -1,16 +1,10 @@
 # Set up utility functions ----
-fixNames <- function(names) {
-    tolower(gsub("([a-z])([A-Z][a-z])", "\\1_\\2", names, perl=TRUE))
-}
 
 showTypes <- function(df) {
     for (var in names(df)) cat(var, ":\t", class(df[, var]), "\n")
 }
 
 convertDate <- function(vec) {
-
-    vec <- as.data.frame(vec)
-    vec <- vec[,1, drop = TRUE]
 
     # Treat 'Current' as missing
     vec[vec=="Current"] <- NA
@@ -40,6 +34,7 @@ convertPercentage <- function(vector) {
 }
 
 fixVariables <- function(df) {
+    df <- as.data.frame(df)
     if (!is.null(short.date.vars)) {
         for (var in short.date.vars) {
             df[, var] <-  convertShortDate(df[, var])
@@ -59,7 +54,7 @@ fixVariables <- function(df) {
     df
 }
 
-addTableToDatabase <- function(df, table.name) {
+addTableToDatabase <- function(df, table.name, comment=NULL) {
 
     library("dplyr")
     library("RPostgreSQL")
@@ -73,63 +68,87 @@ addTableToDatabase <- function(df, table.name) {
         dbGetQuery(pg, paste0("UPDATE boardex.", table.name,
                               " SET ", var, " = eomonth(", var, ")" ))
     }
+
+    if (!is.null(comment)) {
+        sql <- paste0("COMMENT ON TABLE boardex.", table.name, " IS '", comment, "'")
+        dbGetQuery(pg, sql)
+    }
     dbDisconnect(pg)
 }
 
+read_boardex <- function(file, fixExercisePrice = FALSE) {
+
+    fixNames <- function(names) {
+        tolower(gsub("([a-z])([A-Z][a-z])", "\\1_\\2", names, perl=TRUE))
+    }
+
+    library(readr)
+
+    tf <- tempfile()
+
+    # Convert to UTF-8 encoding
+    cmd <- paste0("gunzip -c \"", file, "\" | iconv -f UTF-16 -t UTF-8 | ")
+
+    # Remove carriage returns embedded in fields
+    cmd <- paste0(cmd, "tr -d '\\015' ")
+
+    # Save to temp file
+    cmd <- paste0(cmd, " > ", tf)
+
+    # cat(cmd)
+    system(cmd)
+
+    if (fixExercisePrice) {
+        temp <- read_delim(tf, na=c("", "n.a."), delim="|",
+                           col_types=cols(ExercisePrice = "c"))
+        temp$ExercisePrice <- as.numeric(gsub("#$", "", temp$ExercisePrice))
+    } else {
+        temp <- read_delim(tf, na=c("", "n.a."), delim="|")
+    }
+    names(temp) <- fixNames(names(temp))
+    return(temp)
+}
+
+addFileToDatabase <- function(file) {
+    library(dplyr)
+    table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
+                                     tolower(basename(file))))
+    cat("Processing table:", table.name, "\n")
+    comment <- paste0("Created using data in ", basename(file))
+    read_boardex(file) %>%
+        fixVariables() %>%
+        addTableToDatabase(table.name, comment=comment)
+}
+
 # Read in file list ----
-file_list <- sort(list.files(file.path(Sys.getenv("EDGAR_DIR"), "boardex"),
+file_list <- sort(list.files(file.path(Sys.getenv("DROPBOX_DIR"),
+                                       "boardex"),
                              pattern="*.csv.gz", full.name=TRUE))
 
 # Table 1: board_and_director_announcements ----
 file <- file_list[grepl("Board and Director Announcements", file_list)]
-
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
-                                     tolower(basename(file))))
-library(readr)
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
 
 # attrition and attrition3yr appear to be a percentages
 percent.vars <- NULL
 date.vars <- c("effective_date", "announcement_date")
 short.date.vars <- NULL
 
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 2: board_and_director_committees ----
 file <- file_list[grepl("Board and Director Committees", file_list)]
-
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
-                                     tolower(basename(file))))
-table.name
-
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
 
 # annual_report_date appears to be a short date
 # While incomplete, generally it is `safe' to convert to the end of the month
 percent.vars <- NULL
 date.vars <- NULL
 short.date.vars <- c("annual_report_date")
-temp1 <- fixVariables(temp)
 
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 3: board_characteristics ----
 file <- file_list[grepl("Board Characteristics", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
-                                     tolower(basename(file))))
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
 
 # attrition and attrition3yr appear to be a percentages
 percent.vars <- c("attrition", "attrition3yr", "gender_ratio")
@@ -138,31 +157,17 @@ date.vars <- NULL
 # to the end of the month
 short.date.vars <- c("annual_report_date")
 
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 4: company_profile_advisors ----
 file <- file_list[grepl("Company Profile Advisors", file_list)]
-
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
-                                     tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
 
 # No conversions needed here.
 percent.vars <- NULL
 date.vars <- NULL
 short.date.vars <- NULL
 
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 5: company_profile_details ----
 file <- file_list[grepl("Company Profile Details", file_list)]
@@ -171,54 +176,24 @@ percent.vars <- NULL
 date.vars <- NULL
 short.date.vars <- NULL
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
-                                     tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
-
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 6: company_profile_market_cap ----
 file <- file_list[grepl("Company Profile Market Cap", file_list)]
-
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
-                                     tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
 
 # No conversions needed here.
 percent.vars <- NULL
 date.vars <- NULL
 short.date.vars <- NULL
 
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 7: company_profile_senior_managers ----
 file <- file_list[grepl("Company Profile Senior Managers", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
+table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv\\.gz$", "",
                                      tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
+temp <- read_boardex(file)
 
 percent.vars <- NULL
 date.vars <- c("date_start_role", "date_end_role")
@@ -228,120 +203,68 @@ temp1 <- fixVariables(temp)
 
 # Keep the year as a separate variable if that's all we have
 valid.end.dates <- temp$date_end_role!="Current" & !is.na(temp$date_end_role)
+temp$year_end_role <- NA
 temp$year_end_role[valid.end.dates] <- gsub(".*(\\d{4})$", "\\1", temp$date_end_role[valid.end.dates])
 
-valid.start.dates <- temp$date_start_role!="Current" & !is.na(temp$date_start_role)
+valid.start.dates <- temp$date_start_role!="Current" &
+    !is.na(temp$date_start_role)
+temp$year_start_role <- NA
 temp$year_start_role[valid.start.dates] <-
     gsub(".*(\\d{4})$", "\\1", temp$date_start_role[valid.start.dates])
 
-addTableToDatabase(temp1, table.name)
+comment <- paste0("Created using data in ", basename(file))
+
+addTableToDatabase(temp1, table.name, comment = comment)
 
 # Table 8: company_profile_stocks ----
 file <- file_list[grepl("Company Profile Stocks", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
-                                     tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
-
 # No conversions needed here.
 percent.vars <- NULL
 date.vars <- NULL
 short.date.vars <- NULL
 
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 9: director_characteristics ----
 file <- file_list[grepl("Director Characteristics", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
-                                     tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
-
 # No conversions needed here.
 percent.vars <- NULL
 date.vars <- NULL
 short.date.vars <- NULL
 
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 10: director_profile_achievements ----
 file <- file_list[grepl("Director Profile Achievements", file_list)]
-
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
-                                     tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
 
 # No conversions needed here.
 percent.vars <- NULL
 date.vars <- "achievement_date"
 short.date.vars <- NULL
 
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 11: director_profile_details ----
 file <- file_list[grepl("Director Profile Details", file_list)]
-
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv\\.gz$", "",
-                                     tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
 
 # No conversions needed here.
 percent.vars <- NULL
 date.vars <- c("dob", "dod")
 short.date.vars <- NULL
 
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 12: director_profile_education ----
 file <- file_list[grepl("Director Profile Education", file_list)]
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv\\.gz$", "",
-                                     tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
 
 # No conversions needed here.
 percent.vars <- NULL
 date.vars <- c("award_date")
 short.date.vars <- NULL
 
-temp1 <- fixVariables(temp)
+addFileToDatabase(file)
 
 # Table 13: director_profile_employment ----
 file <- file_list[grepl("Director Profile Employment", file_list)]
@@ -351,10 +274,7 @@ table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv\\.gz$", "",
 
 # Copy and paste table.name output to "Table: ..." line above
 table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
+temp <- read_boardex(file)
 
 percent.vars <- NULL
 date.vars <- c("date_start_role", "date_end_role")
@@ -362,16 +282,20 @@ short.date.vars <- NULL
 
 # Keep the year as a separate variable if that's all we have
 valid.end.dates <- temp$date_end_role!="Current" & !is.na(temp$date_end_role)
+temp$year_end_role <- NA
 temp$year_end_role[valid.end.dates] <-
     gsub(".*(\\d{4})$", "\\1", temp$date_end_role[valid.end.dates])
 
 valid.start.dates <- temp$date_start_role!="Current" & !is.na(temp$date_start_role)
+temp$year_start_role <- NA
 temp$year_start_role[valid.start.dates] <-
     gsub(".*(\\d{4})$", "\\1", temp$date_start_role[valid.start.dates])
 
 temp1 <- fixVariables(temp)
 
-addTableToDatabase(temp1, table.name)
+comment <- paste0("Created using data in ", basename(file))
+
+addTableToDatabase(temp1, table.name, comment = comment)
 
 # Table 14: director_profile_other_activities ----
 file <- file_list[grepl("Director Profile Other Activities", file_list)]
@@ -381,10 +305,7 @@ table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv\\.gz$", "",
 
 # Copy and paste table.name output to "Table: ..." line above
 table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
+temp <- read_boardex(file)
 
 percent.vars <- NULL
 date.vars <- c("start_date", "end_date")
@@ -392,143 +313,82 @@ short.date.vars <- NULL
 
 # Keep the year as a separate variable if that's all we have
 valid.end.dates <- temp$end_date!="Current" & !is.na(temp$end_date)
+temp$end_year <- NA
 temp$end_year[valid.end.dates] <-
     gsub(".*(\\d{4})$", "\\1", temp$end_date[valid.end.dates])
 
 valid.start.dates <- temp$start_date!="Current" & !is.na(temp$start_date)
+temp$start_year <- NA
 temp$start_year[valid.start.dates] <-
     gsub(".*(\\d{4})$", "\\1", temp$start_date[valid.start.dates])
 
 temp1 <- fixVariables(temp)
 
-addTableToDatabase(temp1, table.name)
+comment <- paste0("Created using data in ", basename(file))
+
+addTableToDatabase(temp1, table.name, comment = comment)
 
 # Table 15: director_standard_remuneration ----
 file <- file_list[grepl("Director Standard Remuneration", file_list)]
-
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv\\.gz$", "",
-                                     tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
 
 percent.vars <- "rem_chge_last"
 date.vars <- NULL
 short.date.vars <- "annual_report_date"
 
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 16: ltip_compensation_drilldown ----
 file <- file_list[grepl("LTIP Compensation DrillDown", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv\\.gz$", "", tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|",
-                   col_types=cols(ExercisePrice = "c"))
-temp$ExercisePrice <- as.numeric(gsub("#$", "", temp$ExercisePrice))
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
-
 percent.vars <- NULL
 date.vars <- c("vesting_date", "expiry_date")
 short.date.vars <- "annual_report_date"
 
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 17: ltip_wealth_drilldown ----
 file <- file_list[grepl("LTIP Wealth DrillDown", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv\\.gz$", "",
-                                     tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
-
 percent.vars <- NULL
 date.vars <- c("vesting_date", "expiry_date")
 short.date.vars <- "annual_report_date"
 
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 18: options_compensation_drilldown ----
 file <- file_list[grepl("Options Compensation DrillDown", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv\\.gz$", "",
-                                     tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
-
 # exercise_price needs to be fixed!
 percent.vars <- NULL
 date.vars <- c("vesting_date", "expiry_date")
 short.date.vars <- "annual_report_date"
 
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 19: options_wealth_drilldown ----
 file <- file_list[grepl("Options Wealth DrillDown", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv\\.gz$", "",
-                                     tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
-
 # exercise_price needs to be fixed!
 percent.vars <- NULL
 date.vars <- c("vesting_date", "expiry_date")
 short.date.vars <- "annual_report_date"
 
-temp1 <- fixVariables(temp)
-
-addTableToDatabase(temp1, table.name)
+addFileToDatabase(file)
 
 # Table 20: options_compensation_drilldown ----
 file <- file_list[grepl("Options Compensation DrillDown", file_list)]
 
-table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv\\.gz$", "",
-                                     tolower(basename(file))))
-
-# Copy and paste table.name output to "Table: ..." line above
-table.name
-temp <- read_delim(file, na=c("", "n.a."), delim="|")
-names(temp) <- fixNames(names(temp))
-showTypes(temp)
-head(temp)
-
 # exercise_price needs to be fixed!
 percent.vars <- NULL
 date.vars <- c("vesting_date", "expiry_date")
 short.date.vars <- "annual_report_date"
 
-temp1 <- fixVariables(temp)
+addFileToDatabase(file)
 
-addTableToDatabase(temp1, table.name)
+# Fix permissions in database ----
+library("RPostgreSQL")
+pg <- dbConnect(PostgreSQL())
+dbGetQuery(pg, "GRANT USAGE ON SCHEMA boardex TO crsp_plus")
+dbGetQuery(pg, "GRANT SELECT ON ALL TABLES IN SCHEMA boardex TO crsp_plus")
+
+dbDisconnect(pg)
