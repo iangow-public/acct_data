@@ -15,6 +15,7 @@ use Env qw($PGDATABASE $PGUSER $PGUSER $PGHOST);
 # Set up database connection
 $PGDATABASE = $PGDATABASE ? $PGDATABASE : "crsp";
 $PGUSER = $PGUSER ? $PGUSER : "igow";
+#!/usr/bin/env perl
 $PGHOST= $PGHOST ? $PGHOST : "localhost";
 
 my $dbh = DBI->connect("dbi:Pg:dbname=$PGDATABASE;host=$PGHOST", "$PGUSER")
