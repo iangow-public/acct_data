@@ -109,13 +109,13 @@ read_boardex <- function(file, fixExercisePrice = FALSE) {
     return(temp)
 }
 
-addFileToDatabase <- function(file) {
+addFileToDatabase <- function(file, fixExercisePrice = FALSE) {
     library(dplyr)
     table.name <- gsub("\\s+", "_", gsub("\\d+\\.csv.gz$", "",
                                      tolower(basename(file))))
     cat("Processing table:", table.name, "\n")
     comment <- paste0("Created using data in ", basename(file))
-    read_boardex(file) %>%
+    read_boardex(file, fixExercisePrice = fixExercisePrice) %>%
         fixVariables() %>%
         addTableToDatabase(table.name, comment=comment)
 }
@@ -344,7 +344,7 @@ percent.vars <- NULL
 date.vars <- c("vesting_date", "expiry_date")
 short.date.vars <- "annual_report_date"
 
-addFileToDatabase(file)
+addFileToDatabase(file, fixExercisePrice = TRUE)
 
 # Table 17: ltip_wealth_drilldown ----
 file <- file_list[grepl("LTIP Wealth DrillDown", file_list)]
@@ -368,17 +368,6 @@ addFileToDatabase(file)
 # Table 19: options_wealth_drilldown ----
 file <- file_list[grepl("Options Wealth DrillDown", file_list)]
 
-# exercise_price needs to be fixed!
-percent.vars <- NULL
-date.vars <- c("vesting_date", "expiry_date")
-short.date.vars <- "annual_report_date"
-
-addFileToDatabase(file)
-
-# Table 20: options_compensation_drilldown ----
-file <- file_list[grepl("Options Compensation DrillDown", file_list)]
-
-# exercise_price needs to be fixed!
 percent.vars <- NULL
 date.vars <- c("vesting_date", "expiry_date")
 short.date.vars <- "annual_report_date"
