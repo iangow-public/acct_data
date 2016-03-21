@@ -232,7 +232,7 @@ file <- file_list[grepl("Director Characteristics", file_list)]
 # No conversions needed here.
 percent.vars <- NULL
 date.vars <- NULL
-short.date.vars <- NULL
+short.date.vars <- "annual_report_date"
 
 addFileToDatabase(file)
 
