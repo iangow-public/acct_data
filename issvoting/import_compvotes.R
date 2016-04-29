@@ -13,7 +13,7 @@ table(va$recorddate==va$recorddatec)
 table(va$meetingdatec==va$meetingdate)
 va$meetingdatec <- NULL
 va$recorddatec <- NULL
-va$companyid <- as.numeric(va$companyid)
+va$companyid <- as.integer(va$companyid)
 table(va$companyid==va$companyid_n)
 va$companyid_n <- NULL
 va$base[va$base %in% c('[]', '', 'NA')] <- NA
