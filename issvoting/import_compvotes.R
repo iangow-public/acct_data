@@ -1,6 +1,6 @@
 library(haven)
 
-data_path <- "/Volumes/2TB/data/Dropbox/data/va"
+data_path <- "~/Dropbox/data/va"
 # File obtained from /export/projects/jzeitler_project/VotingAnalytics/201503
 # on HBS Research Grid:
 va <- read_dta(file.path(data_path, "VA_CompanyVotes_2001_2014.dta"))
