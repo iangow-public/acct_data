@@ -68,6 +68,7 @@ getEventReturnsDB <- function(df, days_before=0, days_after=0,
         mutate(ret = if_else(end_event_date > max_date, NA_real_, ret),
                ret_mkt = if_else(end_event_date > max_date, NA_real_, ret_mkt),
                ret_sz = if_else(end_event_date > max_date, NA_real_, ret_sz)) %>%
+        ungroup() %>%
         compute()
 
     # Label variables using label given appended to suffixes
