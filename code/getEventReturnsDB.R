@@ -31,11 +31,14 @@ getEventReturnsDB <- function(df, days_before=0, days_after=0,
         mutate(end_event_date = sql("end_event_date::date"),
                permno = as.integer(permno))
 
-
     rets <- tbl(conn, sql("SELECT * FROM crsp.rets"))
     dsi <- tbl(conn, sql("SELECT * FROM crsp.dsi"))
     anncdates <- tbl(conn, sql("SELECT * FROM crsp.anncdates"))
-    trading_dates <- tbl(conn, sql("SELECT * FROM crsp.trading_dates"))
+    trading_dates <- anncdates %>%
+        select(td, date) %>%
+        distinct() %>%
+        arrange(td) %>%
+        compute()
 
     max_date <-
         dsi %>%
