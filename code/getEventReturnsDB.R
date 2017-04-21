@@ -62,7 +62,7 @@ getEventReturnsDB <- function(df, days_before=0, days_after=0,
 
     ret_data <-
         permnos_plus %>%
-        inner_join(rets) %>%
+        inner_join(rets, by="permno") %>%
         filter(between(date, date_start, date_end)) %>%
         group_by(permno, event_date, end_event_date) %>%
         summarize(ret = product(1 + ret) - 1,
