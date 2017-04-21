@@ -8,7 +8,7 @@ getEventReturnsDB <- function(df, days_before=0, days_after=0,
                             end_event_date=NULL, label="ret", conn=NULL) {
 
     # Make df ----
-    if (!inherits(df, "tbl_postgres")) {
+    if (!inherits(df, "tbl_sql")) {
         df <- copy_to(conn, df, temporary = TRUE, overwrite = TRUE)
     } else {
         conn = df$src
