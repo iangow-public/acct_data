@@ -3,8 +3,6 @@
 # The idea is to make a table that could be used for SQL merges.
 ########################################################################
 args<-commandArgs(TRUE)
-dbname = ifelse(is.null(args[1]), "crsp", args[1])
-print(dbname)
 
 # The URL for the data.
 ff.url.partial <- paste("http://mba.tuck.dartmouth.edu",
@@ -43,7 +41,7 @@ for (i in 2:(dim(ff_beme)[2])) ff_beme[,i] <- as.numeric(trim(ff_beme[,i]))
 library(RPostgreSQL)
 
 pg <- dbConnect(PostgreSQL())
-rs <- dbWriteTable(pg,c("ff","beme"), ff_beme, 
+rs <- dbWriteTable(pg,c("ff","beme"), ff_beme,
                    overwrite=TRUE, row.names=FALSE)
 sql <- paste0("
     COMMENT ON TABLE ff.beme IS
@@ -75,7 +73,7 @@ for (i in 1:3) ff_me[,i] <- as.integer(trim(ff_me[,i]))
 ff_me <- subset(ff_me, !is.na(year))
 for (i in 4:(dim(ff_me)[2])) ff_me[,i] <- as.numeric(trim(ff_me[,i]))
 
-rs <- dbWriteTable(pg,c("ff","me"), ff_me, 
+rs <- dbWriteTable(pg,c("ff","me"), ff_me,
                    overwrite=TRUE, row.names=FALSE)
 sql <- paste0("
     COMMENT ON TABLE ff.me IS
@@ -94,7 +92,7 @@ ff_me_alt$quintile <- as.integer(gsub("^p", "", ff_me_alt$quintile))/20
 ff_me_alt$quintile <- as.integer(ff_me_alt$quintile)
 table(ff_me_alt$quintile)
 
-rs <- dbWriteTable(pg,c("ff","me_alt"), ff_me_alt, 
+rs <- dbWriteTable(pg,c("ff","me_alt"), ff_me_alt,
                    overwrite=TRUE, row.names=FALSE)
 sql <- paste0("
     COMMENT ON TABLE ff.me_alt IS
@@ -112,7 +110,7 @@ names(ff_beme_alt) <- c("year", "quintile", "beme")
 ff_beme_alt$quintile <- as.integer(gsub("^p", "", ff_beme_alt$quintile))/20
 table(ff_beme_alt$quintile)
 
-rs <- dbWriteTable(pg,c("ff","beme_alt"), ff_beme_alt, 
+rs <- dbWriteTable(pg,c("ff","beme_alt"), ff_beme_alt,
                    overwrite=TRUE, row.names=FALSE)
 sql <- paste0("
     COMMENT ON TABLE ff.beme_alt IS

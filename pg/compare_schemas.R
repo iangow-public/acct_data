@@ -1,7 +1,7 @@
 library("RPostgreSQL")
 
-pg1 <- dbConnect(PostgreSQL(), host="localhost", dbname="crsp", port=5432)
-pg2 <- dbConnect(PostgreSQL(), host="localhost", dbname="crsp", port=5433)
+pg1 <- dbConnect(PostgreSQL(), host="localhost", port=5432)
+pg2 <- dbConnect(PostgreSQL(), host="localhost", port=5433)
 
 schemas_sql <- "
     SELECT n.nspname AS name

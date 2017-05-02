@@ -39,7 +39,7 @@ $dbh->do($sql);
 for ($year = 2003; $year <= 2011; $year++) {
   $time = localtime;
   $now_string = strftime "%a %b %e %H:%M:%S %Y", localtime;
-  $filename = "/Users/igow/Dropbox/data/va/";
+  $filename = "~/Dropbox/data/va/";
   $filename .= "ISSRec_VoteAnalysis" . $year . "_" . ($year+1) . ".zip";
   printf "Beginning import of $filename at $now_string\n";
 
@@ -48,7 +48,7 @@ for ($year = 2003; $year <= 2011; $year++) {
   # these as empty lines. So, I simply insert \. into any last line that doesn't
   # begin with a number. This \. is an EOF flag for COPY.
   $cmd  = " unzip -p \"$filename\"  | sed -E '\$ s/^[^0-9]/\\\\\\\./'  ";
-  $cmd .=  "| psql -U igow ";
+  $cmd .=  "| psql ";
   $cmd .= "-d $dbname -c \"COPY issvoting.npx FROM STDIN CSV HEADER ";
   $cmd .= "DELIMITER '\t' ENCODING 'latin1' \";";
   $result = system($cmd);

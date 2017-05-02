@@ -77,10 +77,10 @@ I set these environment variables in `~/.profile`:
 
 ```
 export PGHOST="localhost"
-export PGDATABASE="crsp"
+export PGDATABASE="mydb"
 export EDGAR_DIR="/Volumes/2TB/data"
-export PGUSER="igow"
-export PGBACKUP_DIR="/Users/igow/Dropbox/pg_backup/"
+export PGUSER="iangow"
+export PGBACKUP_DIR="~/Dropbox/pg_backup/"
 ```
 
 I also set them in `~/.Rprofile`, as RStudio doesn't seem to pick up the settings in `~/.profile` in recent versions of OS X:
@@ -88,6 +88,6 @@ I also set them in `~/.Rprofile`, as RStudio doesn't seem to pick up the setting
 ```
 Sys.setenv(EDGAR_DIR="/Volumes/2TB/data")
 Sys.setenv(PGHOST="localhost")
-Sys.setenv(PGDATABASE="crsp")
-Sys.setenv(PGBACKUP_DIR="/Users/igow/Dropbox/pg_backup/")
+Sys.setenv(PGDATABASE="mydb")
+Sys.setenv(PGBACKUP_DIR="~/Dropbox/pg_backup/")
 ```
