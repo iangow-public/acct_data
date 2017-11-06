@@ -1,5 +1,5 @@
 # Load up the PostgreSQL driver, create a connection to the database
-library(dplyr)
+library(dplyr, warn.conflicts = FALSE)
 
 # The following function takes a list of permnos and event dates, then for each
 # calls the function above to get event returns for each PERMNO-event date
