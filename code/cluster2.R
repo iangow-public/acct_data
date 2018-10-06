@@ -32,6 +32,8 @@ coeftest.cluster <- function(data, fm, cluster1=NULL, cluster2=NULL, ret="test")
     library(sandwich)
     library(lmtest)
 
+    data <- as.data.frame(data)
+
     # Return White (1980) standard errors if no cluster
     # variable is provided
     if (is.null(cluster1)) {
@@ -44,7 +46,6 @@ coeftest.cluster <- function(data, fm, cluster1=NULL, cluster2=NULL, ret="test")
 
     # Calculation shared by covariance estimates
     est.fun <- estfun(fm)
-    # est.fun <- sweep(fm$model,MARGIN=2,fm$residuals,`*`)
 
     # Need to identify observations used in the regression (i.e.,
     # non-missing) values, as the cluster vectors come from the full
@@ -93,8 +94,8 @@ coeftest.cluster <- function(data, fm, cluster1=NULL, cluster2=NULL, ret="test")
     } else {
         # Otherwise do the calculations for the second cluster
         # and the "intersection" cluster.
-        cluster2 <- data[inc.obs,cluster2]
-            cluster12 <- paste(cluster1,cluster2, sep="")
+        cluster2 <- data[inc.obs, cluster2]
+            cluster12 <- paste(cluster1, cluster2, sep="")
 
         # Calculate the covariance matrices for cluster2, the "intersection"
         # cluster, then then put all the pieces together.
