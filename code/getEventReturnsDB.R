@@ -42,7 +42,7 @@ getEventReturnsDB <- function(df, days_before=0, days_after=0,
 
     max_date <-
         dsi %>%
-        summarize(date =  max(date)) %>%
+        summarize(date =  max(date, na.rm = TRUE)) %>%
         collect() %>%
         .[[1]]
 
