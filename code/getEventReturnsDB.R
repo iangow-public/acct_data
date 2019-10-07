@@ -11,7 +11,7 @@ getEventReturnsDB <- function(df, days_before=0, days_after=0,
     if (!inherits(df, "tbl_sql")) {
         df <- copy_to(conn, df, temporary = TRUE, overwrite = TRUE)
     } else {
-        conn = df$src
+        conn = df[["src"]]
     }
 
     df <-
@@ -65,13 +65,14 @@ getEventReturnsDB <- function(df, days_before=0, days_after=0,
         inner_join(rets, by="permno") %>%
         filter(between(date, date_start, date_end)) %>%
         group_by(permno, event_date, end_event_date) %>%
-        summarize(ret = product(1 + ret) - 1,
+        summarize(ret_raw = product(1 + ret) - 1,
                   ret_mkt = product(1+ret)-product(1+vwretd),
                   ret_sz = product(1+ret)-product(1+decret)) %>%
-        mutate(ret = if_else(end_event_date > max_date, NA_real_, ret),
+        ungroup() %>%
+        compute() %>%
+        mutate(ret_raw = if_else(end_event_date > max_date, NA_real_, ret_raw),
                ret_mkt = if_else(end_event_date > max_date, NA_real_, ret_mkt),
                ret_sz = if_else(end_event_date > max_date, NA_real_, ret_sz)) %>%
-        ungroup() %>%
         compute()
 
     # Label variables using label given appended to suffixes
