@@ -1,7 +1,7 @@
 Data for accounting research
 =========
 
-This repository contains used to contain code to pull together data from various sources including:
+This repository *used to* contain code to pull together data from various sources including:
 - [SEC EDGAR](http://www.sec.gov/edgar/searchedgar/webusers.htm). Now see [this repository](https://github.com/mccgr/edgar).
 - Ken French's [website](http://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html). Now see [this repository](https://github.com/iangow/ff).
 - [Whalewisdom](whalewisdom/README.md). Now in [this (private) repository](https://github.com/iangow/whalewisdom).
