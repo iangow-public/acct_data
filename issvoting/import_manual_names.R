@@ -1,22 +1,22 @@
 # Get corrected data on board-related activism from Google Sheets document ----
-require(RCurl)
-csv_file <- getURL(paste0("https://docs.google.com/spreadsheet/pub?",
-                         "key=0AuGYuDecQAVTdEc5WmhEWVY1ZWF1cjlxVFJEaHRzUFE",
-                         "&output=csv"),
-                   verbose=FALSE)
-manual_names <- read.csv(textConnection(csv_file), as.is=TRUE)
+library(googlesheets4)
+library(DBI)
 
-for (i in names(manual_names)) class(manual_names[,i]) <- "character"
+gs <- as_sheets_id("0AuGYuDecQAVTdEc5WmhEWVY1ZWF1cjlxVFJEaHRzUFE")
 
-library(RPostgreSQL)
-pg <- dbConnect(PostgreSQL())
+manual_names <- read_sheet(gs)
 
-rs <- dbWriteTable(pg, name=c("issvoting", "manual_names"), manual_names,
+pg <- dbConnect(RPostgres::Postgres())
+
+rs <- dbExecute(pg, "SET search_path TO risk")
+
+rs <- dbWriteTable(pg, "manual_names", manual_names,
                    overwrite=TRUE, row.names=FALSE)
 
+rs <- dbExecute(pg, "ALTER TABLE manual_names OWNER TO risk")
+rs <- dbExecute(pg, "GRANT SELECT ON TABLE manual_names TO risk_access")
 sql <- paste("
-  COMMENT ON TABLE issvoting.manual_names IS
+  COMMENT ON TABLE manual_names IS
     'CREATED USING import_manual_names ON ", Sys.time() , "';", sep="")
-rs <- dbGetQuery(pg, sql)
+rs <- dbExecute(pg, sql)
 dbDisconnect(pg)
-
